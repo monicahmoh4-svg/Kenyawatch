@@ -1,15 +1,18 @@
 "use client"
+
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Shield, FileText, MapPin, MessageSquare, ArrowRight, AlertTriangle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { statsApi, type DashboardStats } from "@/lib/api"
+import { statsApi } from "@/lib/api"
+import { type DashboardStats } from "@/types"
 
 export default function HomePage() {
-  const [stats, setStats] = useState<any>(null)
+  const [stats, setStats] = useState<DashboardStats | null>(null)
   const [loading, setLoading] = useState(true)
+
   useEffect(() => {
     statsApi.getDashboard().then(res => setStats(res.data)).catch(console.error).finally(() => setLoading(false))
   }, [])
