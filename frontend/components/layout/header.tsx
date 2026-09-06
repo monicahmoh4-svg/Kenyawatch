@@ -1,4 +1,5 @@
 "use client"
+
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Shield, Menu, X } from "lucide-react"
@@ -17,39 +18,73 @@ const navigation = [
 export function Header() {
   const pathname = usePathname()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
+    <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 shadow-sm">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
-          <Link href="/" className="flex items-center space-x-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-kenya-teal text-white">
+          {/* Logo */}
+          <Link href="/" className="flex items-center space-x-3 group">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-teal-600 to-teal-500 text-white shadow-lg group-hover:shadow-xl transition-shadow">
               <Shield className="h-6 w-6" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-slate-900">KenyaWatch AI</h1>
+              <h1 className="text-xl font-bold text-slate-900 group-hover:text-kenya-teal transition-colors">KenyaWatch AI</h1>
               <p className="text-xs text-slate-500">Procurement Accountability</p>
             </div>
           </Link>
-          <nav className="hidden md:flex items-center space-x-6">
+
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex items-center space-x-1">
             {navigation.map((item) => (
-              <Link key={item.href} href={item.href} className={cn("text-sm font-medium transition-colors hover:text-kenya-teal", pathname === item.href ? "text-kenya-teal" : "text-slate-600")}>
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "px-4 py-2 text-sm font-medium rounded-lg transition-all",
+                  pathname === item.href
+                    ? "bg-kenya-teal/10 text-kenya-teal"
+                    : "text-slate-600 hover:text-kenya-teal hover:bg-slate-100"
+                )}
+              >
                 {item.name}
               </Link>
             ))}
           </nav>
-          <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-            {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+
+          {/* Mobile menu button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          >
+            {mobileMenuOpen ? (
+              <X className="h-6 w-6" />
+            ) : (
+              <Menu className="h-6 w-6" />
+            )}
           </Button>
         </div>
+
+        {/* Mobile Navigation */}
         {mobileMenuOpen && (
-          <nav className="md:hidden py-4 border-t">
-            <div className="flex flex-col space-y-3">
-              {navigation.map((item) => (
-                <Link key={item.href} href={item.href} className={cn("text-sm font-medium px-3 py-2 rounded-md transition-colors", pathname === item.href ? "bg-kenya-teal/10 text-kenya-teal" : "text-slate-600 hover:bg-slate-100")} onClick={() => setMobileMenuOpen(false)}>
-                  {item.name}
-                </Link>
-              ))}
-            </div>
+          <nav className="md:hidden py-4 border-t space-y-2">
+            {navigation.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "block px-4 py-3 text-sm font-medium rounded-lg transition-colors",
+                  pathname === item.href
+                    ? "bg-kenya-teal text-white"
+                    : "text-slate-600 hover:bg-slate-100"
+                )}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                {item.name}
+              </Link>
+            ))}
           </nav>
         )}
       </div>
