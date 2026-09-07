@@ -3,6 +3,7 @@ import { Inter } from "next/font/google"
 import "./globals.css"
 import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"
+import { ChatbotWidget } from "@/components/ChatbotWidget"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -20,6 +21,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           <Header />
           <main className="flex-1">{children}</main>
           <Footer />
+          <ChatbotWidget />
         </div>
       </body>
     </html>
