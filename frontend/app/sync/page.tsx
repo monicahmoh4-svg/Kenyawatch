@@ -99,7 +99,7 @@ export default function SyncPage() {
     loadContracts()
   }
 
-  const years = [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026]
+  const years = Array.from({ length: 12 }, (_, i) => 2015 + i)
 
   return (
     <div className="min-h-screen bg-slate-50">

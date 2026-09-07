@@ -9,6 +9,6 @@ const nextConfig = {
       { protocol: 'https', hostname: 'upload.wikimedia.org' },
     ]
   },
-  env: { NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'https://kenyawatch-api.onrender.com' }
+  env: { NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'https://kenyawatch.onrender.com' }
 }
 module.exports = nextConfig

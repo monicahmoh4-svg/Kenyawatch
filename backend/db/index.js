@@ -13,8 +13,20 @@ const pool = new Pool({
 });
 
 async function ensureSchema() {
-  const steps = [
-    `CREATE TABLE IF NOT EXISTS contracts (
+  console.log('[schema] Dropping old tables for clean schema (force)...');
+  const drops = [
+    'DROP TABLE IF EXISTS contracts CASCADE',
+    'DROP TABLE IF EXISTS ghost_projects CASCADE',
+    'DROP TABLE IF EXISTS reports CASCADE',
+    'DROP TABLE IF EXISTS ocds_sync_log CASCADE',
+  ];
+  for (const sql of drops) {
+    try { await pool.query(sql); }
+    catch (e) { console.error('[drop]', e.message); }
+  }
+
+  const tables = [
+    `CREATE TABLE contracts (
       id SERIAL PRIMARY KEY,
       contract_id TEXT UNIQUE,
       county TEXT,
@@ -34,7 +46,7 @@ async function ensureSchema() {
       source_url TEXT,
       created_at TIMESTAMPTZ DEFAULT NOW()
     );`,
-    `CREATE TABLE IF NOT EXISTS ghost_projects (
+    `CREATE TABLE ghost_projects (
       id SERIAL PRIMARY KEY,
       project_id TEXT UNIQUE,
       county TEXT,
@@ -48,7 +60,7 @@ async function ensureSchema() {
       source_url TEXT,
       created_at TIMESTAMPTZ DEFAULT NOW()
     );`,
-    `CREATE TABLE IF NOT EXISTS reports (
+    `CREATE TABLE reports (
       id SERIAL PRIMARY KEY,
       case_number TEXT UNIQUE,
       county TEXT,
@@ -58,7 +70,7 @@ async function ensureSchema() {
       status TEXT DEFAULT 'received',
       created_at TIMESTAMPTZ DEFAULT NOW()
     );`,
-    `CREATE TABLE IF NOT EXISTS ocds_sync_log (
+    `CREATE TABLE ocds_sync_log (
       id SERIAL PRIMARY KEY,
       year INT,
       county TEXT,
@@ -69,56 +81,26 @@ async function ensureSchema() {
     );`,
   ];
 
-  for (const sql of steps) {
+  for (const sql of tables) {
     try { await pool.query(sql); }
     catch (e) { console.error('[schema]', e.message); }
   }
 
-  const migrations = [
-    `ALTER TABLE contracts ADD COLUMN IF NOT EXISTS title TEXT DEFAULT '';`,
-    `ALTER TABLE contracts ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'active';`,
-    `ALTER TABLE contracts ADD COLUMN IF NOT EXISTS scope TEXT DEFAULT '';`,
-    `ALTER TABLE contracts ADD COLUMN IF NOT EXISTS source_name TEXT;`,
-    `ALTER TABLE contracts ADD COLUMN IF NOT EXISTS source_url TEXT;`,
-    `ALTER TABLE ghost_projects ADD COLUMN IF NOT EXISTS project_id TEXT;`,
-    `ALTER TABLE ghost_projects ADD COLUMN IF NOT EXISTS title TEXT DEFAULT '';`,
-    `ALTER TABLE ghost_projects ADD COLUMN IF NOT EXISTS description TEXT DEFAULT '';`,
-    `ALTER TABLE ghost_projects ADD COLUMN IF NOT EXISTS claimed_status TEXT;`,
-    `ALTER TABLE ghost_projects ADD COLUMN IF NOT EXISTS lat DOUBLE PRECISION;`,
-    `ALTER TABLE ghost_projects ADD COLUMN IF NOT EXISTS lng DOUBLE PRECISION;`,
-    `ALTER TABLE ghost_projects ADD COLUMN IF NOT EXISTS source_name TEXT;`,
-    `ALTER TABLE ghost_projects ADD COLUMN IF NOT EXISTS source_url TEXT;`,
-  ];
-
-  for (const sql of migrations) {
-    try { await pool.query(sql); }
-    catch (e) { console.warn('[migration]', e.message.substring(0, 120)); }
-  }
-
-  const constraints = [
-    `DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'ghost_projects_project_id_key') THEN ALTER TABLE ghost_projects ADD CONSTRAINT ghost_projects_project_id_key UNIQUE (project_id); END IF; END $$;`,
-    `DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'contracts_contract_id_key') THEN ALTER TABLE contracts ADD CONSTRAINT contracts_contract_id_key UNIQUE (contract_id); END IF; END $$;`,
-  ];
-
-  for (const sql of constraints) {
-    try { await pool.query(sql); }
-    catch (e) { console.warn('[constraint]', e.message.substring(0, 120)); }
-  }
-
   const indexes = [
-    'CREATE INDEX IF NOT EXISTS idx_contracts_county ON contracts(county);',
-    'CREATE INDEX IF NOT EXISTS idx_contracts_year ON contracts(year);',
-    'CREATE INDEX IF NOT EXISTS idx_contracts_data_type ON contracts(data_type);',
-    'CREATE INDEX IF NOT EXISTS idx_contracts_risk ON contracts(risk_score);',
-    'CREATE INDEX IF NOT EXISTS idx_contracts_sector ON contracts(sector);',
-    'CREATE INDEX IF NOT EXISTS idx_contracts_value ON contracts(value_kes);',
-    'CREATE INDEX IF NOT EXISTS idx_ghost_county ON ghost_projects(county);',
-    'CREATE INDEX IF NOT EXISTS idx_reports_status ON reports(status);'
+    'CREATE INDEX idx_contracts_county ON contracts(county);',
+    'CREATE INDEX idx_contracts_year ON contracts(year);',
+    'CREATE INDEX idx_contracts_data_type ON contracts(data_type);',
+    'CREATE INDEX idx_contracts_risk ON contracts(risk_score);',
+    'CREATE INDEX idx_contracts_sector ON contracts(sector);',
+    'CREATE INDEX idx_contracts_value ON contracts(value_kes);',
+    'CREATE INDEX idx_ghost_county ON ghost_projects(county);',
+    'CREATE INDEX idx_reports_status ON reports(status);'
   ];
   for (const sql of indexes) {
     try { await pool.query(sql); }
-    catch (e) { console.warn('[index skipped]', e.message); }
+    catch (e) { console.warn('[index]', e.message.substring(0, 80)); }
   }
+  console.log('[schema] Done');
 }
 
 async function seed() {
@@ -126,9 +108,9 @@ async function seed() {
   const documentedCases = require('../data/documentedCases');
   const { scoreContract } = require('../utils/riskEngine');
 
-  const existingCount = await pool.query("SELECT COUNT(*) FROM contracts WHERE data_type = 'live_sync'");
+  const existingCount = await pool.query('SELECT COUNT(*) FROM contracts');
   if (parseInt(existingCount.rows[0].count) > 0) {
-    console.log('[seed] Live sync data already exists, skipping synthetic seed');
+    console.log('[seed] Data already exists, skipping seed');
     return;
   }
 
@@ -153,13 +135,12 @@ async function seed() {
     'Kenya Prisons Service', 'National Police Service Commission',
     'Shelter Afrique', 'National Housing Corporation',
     'KPMG Kenya', 'Deloitte Kenya', 'PricewaterhouseCoopers Kenya',
-    'Safaricom PLC', 'Jamii Telecommunications', 'Telkom Kenya',
+    'Jamii Telecommunications', 'Telkom Kenya',
     'Kenya Commercial Bank', 'Equity Bank', 'Co-operative Bank of Kenya',
     'Standard Chartered Kenya', 'Barclays Bank of Kenya',
-    'Sports, Arts and Social Development Fund', 'Kenya Medical Research Institute',
-    'National Museums of Kenya', 'Kenya National Library Service',
-    'Agricultural Finance Corporation', 'Kenya Meat Commission',
-    'Kenya Forest Service', 'Directorate of Criminal Investigations'
+    'Sports Arts and Social Development Fund', 'National Museums of Kenya',
+    'Kenya National Library Service', 'Agricultural Finance Corporation',
+    'Kenya Meat Commission', 'Kenya Forest Service', 'Directorate of Criminal Investigations'
   ];
 
   const townsByCounty = {
@@ -207,7 +188,6 @@ async function seed() {
     'Wajir': ['Habaswein', 'Tarbaj', 'Wajir East', 'Wajir South'],
     'Mandera': ['Elwak', 'Rhamu', 'Lafey', 'Mandera East'],
     'Elgeyo-Marakwet': ['Iten', 'Kabarak', 'Tambach', 'Marakwet East'],
-    'Bomet': ['Sotik', 'Chepalungu', 'Konoin', 'Longisa'],
   };
 
   const titleTemplates = {
@@ -339,9 +319,9 @@ async function seed() {
       'Supply of Prefabricated Structures to {county}',
       'Construction of Residential Flats in {town}, {county}',
       'Renovation of Government Housing in {county}',
-      'Construction of Affordable Housing Units in {town}, {county}',
-      'Supply of Roofing Materials to {county} County',
       'Construction of Estate Access Roads in {town}, {county}',
+      'Supply of Roofing Materials to {county} County',
+      'Construction of Water Harvesting System in {town}, {county}',
     ],
     'Public Works': [
       'Construction of Administration Block in {town}, {county}',
@@ -383,6 +363,8 @@ async function seed() {
 
   let id = 1;
   const allContracts = [];
+  const years = [];
+  for (let y = 2015; y <= 2026; y++) years.push(y);
 
   for (const county of counties) {
     const towns = townsByCounty[county.name] || [county.name, county.name + ' Town'];
@@ -396,7 +378,7 @@ async function seed() {
       const template = templates[i % templates.length];
       const title = template.replace(/\{county\}/g, county.name).replace(/\{town\}/g, town).replace(/\{town2\}/g, town2);
 
-      const year = 2018 + (id % 8);
+      const year = years[id % years.length];
       const month = String(1 + (id % 12)).padStart(2, '0');
       const day = String(1 + (id % 28)).padStart(2, '0');
 
@@ -477,6 +459,7 @@ async function seed() {
     { project_id: 'GP-MACH-001', county: 'Machakos', title: 'Machakos Level 5 Hospital Expansion', description: 'Hospital expansion to add 200 beds. KES 2.1 billion allocated. Only old wing demolished. New construction not started after 18 months.', claimed_status: 'abandoned', lat: -1.52, lng: 37.26, data_type: 'documented', source_name: 'Kenya Medical Association', source_url: 'https://www.kma.co.ke' },
   ];
 
+  let ghostInserted = 0;
   for (const g of ghostProjects) {
     try {
       await pool.query(`
@@ -484,8 +467,10 @@ async function seed() {
         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
         ON CONFLICT (project_id) DO NOTHING`,
         [g.project_id, g.county, g.title, g.description, g.claimed_status, g.lat, g.lng, g.data_type, g.source_name, g.source_url]);
+      ghostInserted++;
     } catch (e) { console.warn('[seed ghost]', e.message.substring(0, 100)); }
   }
+  console.log(`[seed] Inserted ${ghostInserted} ghost projects`);
   console.log('[seed] done');
 }
 
