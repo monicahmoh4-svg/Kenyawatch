@@ -16,7 +16,7 @@ app.use(morgan('combined'));
 
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 200,
+  max: 300,
   message: { error: 'Too many requests, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
@@ -47,7 +47,7 @@ app.use('/api/ai', aiLimiter, require('./routes/ai'));
 app.use('/api/sync', require('./routes/ocdsSync'));
 app.use('/api/admin', require('./routes/admin'));
 
-app.get('/api/health', (_req, res) => res.json({ ok: true, ts: Date.now() }));
+app.get('/api/health', (_req, res) => res.json({ ok: true, ts: Date.now(), version: '2.0.0' }));
 
 app.use((err, _req, res, _next) => {
   console.error('[ERR]', err);
@@ -57,9 +57,11 @@ app.use((err, _req, res, _next) => {
 async function start() {
   const { ensureSchema, seed } = require('./db');
   await ensureSchema();
-  const { pool } = require('./db');
-  const result = await pool.query("SELECT COUNT(*) FROM contracts WHERE data_type = 'reference'");
-  if (parseInt(result.rows[0].count) === 0) await seed();
-  app.listen(PORT, () => console.log(`KenyaWatch API running on :${PORT}`));
+  try {
+    await seed();
+  } catch (e) {
+    console.error('[seed error]', e.message);
+  }
+  app.listen(PORT, () => console.log(`KenyaWatch API v2.0 running on :${PORT}`));
 }
 start().catch(console.error);

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { Shield, FileText, MapPin, MessageSquare, ArrowRight, AlertTriangle, TrendingUp, Users, Building2, ChevronRight, Globe, Eye } from "lucide-react"
+import { Shield, FileText, MapPin, MessageSquare, ArrowRight, AlertTriangle, TrendingUp, Users, Building2, Globe, Eye, RefreshCw, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -66,20 +66,20 @@ export default function HomePage() {
 
   return (
     <div>
-      {/* Hero Section with HD Background */}
+      {/* Hero Section with KICC Nairobi Background */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        {/* HD Background Image - Kenya Parliament */}
+        {/* HD KICC Nairobi Background Image */}
         <div
           className="absolute inset-0 bg-cover bg-center bg-fixed"
           style={{
-            backgroundImage: "url('https://images.unsplash.com/photo-1611348586804-61bf6c080437?w=1920&q=85')",
+            backgroundImage: "url('https://images.pexels.com/photos/35238178/pexels-photo-35238178.jpeg?auto=compress&cs=tinysrgb&w=1920')",
           }}
         >
-          <div className="absolute inset-0 bg-gradient-to-br from-black/90 via-slate-900/85 to-teal-900/80" />
+          <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-slate-900/75 to-teal-900/70" />
         </div>
 
         {/* Animated gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-r from-teal-600/20 via-transparent to-blue-600/20 animate-pulse" />
+        <div className="absolute inset-0 bg-gradient-to-r from-teal-600/15 via-transparent to-blue-600/15 animate-pulse-slow" />
 
         {/* Content */}
         <div className="relative z-10 container mx-auto px-4 text-center">
@@ -128,7 +128,7 @@ export default function HomePage() {
                       <stat.icon className="h-5 w-5" />
                     </div>
                     <div className="text-3xl font-bold text-white mb-1">
-                      {loading ? "—" : stat.value}
+                      {loading ? "—" : stat.value.toLocaleString()}
                     </div>
                     <div className="text-xs text-slate-300">{stat.label}</div>
                   </CardContent>
@@ -176,7 +176,7 @@ export default function HomePage() {
                     </p>
                     <div className="flex items-center justify-between pt-4 border-t">
                       <div>
-                        <div className="text-3xl font-bold text-teal-600">{feature.stat}</div>
+                        <div className="text-3xl font-bold text-teal-600">{typeof feature.stat === 'number' ? feature.stat.toLocaleString() : feature.stat}</div>
                         <div className="text-sm text-slate-500">{feature.statLabel}</div>
                       </div>
                       <ArrowRight className="h-5 w-5 text-slate-400 group-hover:text-teal-600 group-hover:translate-x-2 transition-all" />
@@ -198,9 +198,9 @@ export default function HomePage() {
           </div>
           <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             {[
-              { step: "01", title: "Data Collection", desc: "We aggregate data from PPIP, OCDS feeds, Auditor-General reports, and citizen submissions." },
-              { step: "02", title: "AI Risk Analysis", desc: "Every contract is scored using our risk engine that detects bid rigging, overpricing, and ghost projects." },
-              { step: "03", title: "Public Access", desc: "All data is freely accessible with source badges so you can verify every claim independently." },
+              { step: "01", title: "Data Collection", desc: "We aggregate data from PPIP (tenders.go.ke), OCDS feeds, Auditor-General reports, and citizen submissions across all 47 counties." },
+              { step: "02", title: "AI Risk Analysis", desc: "Every contract is scored using our risk engine that detects bid rigging, overpricing, single-source procurement, and ghost projects." },
+              { step: "03", title: "Public Access", desc: "All data is freely accessible with source badges so you can verify every claim independently. Sort by county, sector, year, or risk level." },
             ].map((item, i) => (
               <div key={i} className="text-center p-8 rounded-2xl bg-slate-50 hover:bg-teal-50 transition-colors">
                 <div className="text-5xl font-bold text-teal-200 mb-4">{item.step}</div>
@@ -241,7 +241,7 @@ export default function HomePage() {
               <Badge variant="live_sync" className="text-sm px-6 py-3 border-2">
                 <span className="flex items-center gap-2">
                   <span className="w-2 h-2 bg-blue-500 rounded-full" />
-                  Live Sync - OCDS Feed
+                  Live Sync - PPIP/OCDS Feed
                 </span>
               </Badge>
               <Badge variant="manual_scan" className="text-sm px-6 py-3 border-2">
@@ -265,7 +265,7 @@ export default function HomePage() {
       <section className="py-24 bg-slate-900 relative overflow-hidden">
         <div className="absolute inset-0 opacity-20">
           <div className="absolute inset-0" style={{
-            backgroundImage: "url('https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=1920&q=80')",
+            backgroundImage: "url('https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=1920&q=80')",
             backgroundSize: 'cover',
             backgroundPosition: 'center'
           }} />

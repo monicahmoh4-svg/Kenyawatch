@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Shield, Menu, X, ExternalLink } from "lucide-react"
+import { Shield, Menu, X, ExternalLink, Database } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
@@ -10,6 +10,7 @@ import { useState } from "react"
 const navigation = [
   { name: "Dashboard", href: "/" },
   { name: "Contracts", href: "/contracts" },
+  { name: "Sync & Browse", href: "/sync", icon: Database },
   { name: "Ghost Projects", href: "/ghost-projects" },
   { name: "Report", href: "/report" },
   { name: "AI Investigator", href: "/chat" },
@@ -41,17 +42,18 @@ export function Header() {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "px-4 py-2 text-sm font-medium rounded-lg transition-all",
+                  "px-3 py-2 text-sm font-medium rounded-lg transition-all flex items-center gap-1.5",
                   pathname === item.href
                     ? "bg-teal-50 text-teal-700"
                     : "text-slate-600 hover:text-teal-600 hover:bg-slate-50"
                 )}
               >
+                {item.icon && <item.icon className="h-3.5 w-3.5" />}
                 {item.name}
               </Link>
             ))}
             <a
-              href="https://ppra.go.ke"
+              href="https://tenders.go.ke"
               target="_blank"
               rel="noopener noreferrer"
               className="px-3 py-2 text-sm font-medium text-slate-500 hover:text-teal-600 transition-colors flex items-center gap-1"
@@ -83,13 +85,14 @@ export function Header() {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "block px-4 py-3 text-sm font-medium rounded-lg transition-colors",
+                  "block px-4 py-3 text-sm font-medium rounded-lg transition-colors flex items-center gap-2",
                   pathname === item.href
                     ? "bg-teal-600 text-white"
                     : "text-slate-600 hover:bg-slate-50"
                 )}
                 onClick={() => setMobileMenuOpen(false)}
               >
+                {item.icon && <item.icon className="h-4 w-4" />}
                 {item.name}
               </Link>
             ))}

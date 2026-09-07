@@ -52,7 +52,7 @@ router.get('/', async (req, res) => {
       const b = bands[risk_level];
       if (b) { params.push(b[0], b[1]); where.push(`risk_score BETWEEN $${params.length-1} AND $${params.length}`); }
     }
-    if (search) { params.push(`%${search}%`); where.push(`(title ILIKE $${params.length} OR supplier ILIKE $${params.length} OR county ILIKE $${params.length} OR contract_id ILIKE $${params.length})`); }
+    if (search) { params.push(`%${search}%`); where.push(`(title ILIKE $${params.length} OR supplier ILIKE $${params.length} OR county ILIKE $${params.length} OR contract_id ILIKE $${params.length} OR scope ILIKE $${params.length} OR sector ILIKE $${params.length})`); }
     const whereClause = where.length ? `WHERE ${where.join(' AND ')}` : '';
     const lim = Math.min(Number(limit) || 20, 100);
     const off = (Math.max(Number(page) || 1, 1) - 1) * lim;
