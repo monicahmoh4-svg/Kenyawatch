@@ -67,12 +67,42 @@ async function ensureSchema() {
       error TEXT,
       created_at TIMESTAMPTZ DEFAULT NOW()
     );`,
-    `ALTER TABLE contracts ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'active';`
   ];
 
   for (const sql of steps) {
     try { await pool.query(sql); }
     catch (e) { console.error('[schema]', e.message); }
+  }
+
+  const migrations = [
+    `ALTER TABLE contracts ADD COLUMN IF NOT EXISTS title TEXT DEFAULT '';`,
+    `ALTER TABLE contracts ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'active';`,
+    `ALTER TABLE contracts ADD COLUMN IF NOT EXISTS scope TEXT DEFAULT '';`,
+    `ALTER TABLE contracts ADD COLUMN IF NOT EXISTS source_name TEXT;`,
+    `ALTER TABLE contracts ADD COLUMN IF NOT EXISTS source_url TEXT;`,
+    `ALTER TABLE ghost_projects ADD COLUMN IF NOT EXISTS project_id TEXT;`,
+    `ALTER TABLE ghost_projects ADD COLUMN IF NOT EXISTS title TEXT DEFAULT '';`,
+    `ALTER TABLE ghost_projects ADD COLUMN IF NOT EXISTS description TEXT DEFAULT '';`,
+    `ALTER TABLE ghost_projects ADD COLUMN IF NOT EXISTS claimed_status TEXT;`,
+    `ALTER TABLE ghost_projects ADD COLUMN IF NOT EXISTS lat DOUBLE PRECISION;`,
+    `ALTER TABLE ghost_projects ADD COLUMN IF NOT EXISTS lng DOUBLE PRECISION;`,
+    `ALTER TABLE ghost_projects ADD COLUMN IF NOT EXISTS source_name TEXT;`,
+    `ALTER TABLE ghost_projects ADD COLUMN IF NOT EXISTS source_url TEXT;`,
+  ];
+
+  for (const sql of migrations) {
+    try { await pool.query(sql); }
+    catch (e) { console.warn('[migration]', e.message.substring(0, 120)); }
+  }
+
+  const constraints = [
+    `DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'ghost_projects_project_id_key') THEN ALTER TABLE ghost_projects ADD CONSTRAINT ghost_projects_project_id_key UNIQUE (project_id); END IF; END $$;`,
+    `DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'contracts_contract_id_key') THEN ALTER TABLE contracts ADD CONSTRAINT contracts_contract_id_key UNIQUE (contract_id); END IF; END $$;`,
+  ];
+
+  for (const sql of constraints) {
+    try { await pool.query(sql); }
+    catch (e) { console.warn('[constraint]', e.message.substring(0, 120)); }
   }
 
   const indexes = [
