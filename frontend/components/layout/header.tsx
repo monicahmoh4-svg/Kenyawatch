@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Shield, Menu, X } from "lucide-react"
+import { Shield, Menu, X, ExternalLink } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
@@ -25,12 +25,12 @@ export function Header() {
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-3 group">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-teal-600 to-teal-500 text-white shadow-lg group-hover:shadow-xl transition-shadow">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-teal-600 to-emerald-600 text-white shadow-lg group-hover:shadow-xl transition-shadow">
               <Shield className="h-6 w-6" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-slate-900 group-hover:text-kenya-teal transition-colors">KenyaWatch AI</h1>
-              <p className="text-xs text-slate-500">Procurement Accountability</p>
+              <h1 className="text-xl font-bold text-slate-900 group-hover:text-teal-600 transition-colors">KenyaWatch AI</h1>
+              <p className="text-[10px] text-slate-500 tracking-wide uppercase">Procurement Accountability</p>
             </div>
           </Link>
 
@@ -43,13 +43,21 @@ export function Header() {
                 className={cn(
                   "px-4 py-2 text-sm font-medium rounded-lg transition-all",
                   pathname === item.href
-                    ? "bg-kenya-teal/10 text-kenya-teal"
-                    : "text-slate-600 hover:text-kenya-teal hover:bg-slate-100"
+                    ? "bg-teal-50 text-teal-700"
+                    : "text-slate-600 hover:text-teal-600 hover:bg-slate-50"
                 )}
               >
                 {item.name}
               </Link>
             ))}
+            <a
+              href="https://ppra.go.ke"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-3 py-2 text-sm font-medium text-slate-500 hover:text-teal-600 transition-colors flex items-center gap-1"
+            >
+              PPIP <ExternalLink className="h-3 w-3" />
+            </a>
           </nav>
 
           {/* Mobile menu button */}
@@ -69,7 +77,7 @@ export function Header() {
 
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
-          <nav className="md:hidden py-4 border-t space-y-2">
+          <nav className="md:hidden py-4 border-t space-y-1 bg-white">
             {navigation.map((item) => (
               <Link
                 key={item.href}
@@ -77,8 +85,8 @@ export function Header() {
                 className={cn(
                   "block px-4 py-3 text-sm font-medium rounded-lg transition-colors",
                   pathname === item.href
-                    ? "bg-kenya-teal text-white"
-                    : "text-slate-600 hover:bg-slate-100"
+                    ? "bg-teal-600 text-white"
+                    : "text-slate-600 hover:bg-slate-50"
                 )}
                 onClick={() => setMobileMenuOpen(false)}
               >

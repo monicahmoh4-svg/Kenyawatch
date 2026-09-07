@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const rateLimit = require('express-rate-limit');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -13,11 +14,36 @@ app.use(cors({ origin: allowedOrigins, credentials: false }));
 app.use(express.json({ limit: '1mb' }));
 app.use(morgan('combined'));
 
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 200,
+  message: { error: 'Too many requests, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use('/api/', generalLimiter);
+
+const aiLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 15,
+  message: { error: 'Too many AI requests, please wait a minute.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const reportLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 10,
+  message: { error: 'Too many reports submitted, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 app.use('/api/contracts', require('./routes/contracts'));
 app.use('/api/stats', require('./routes/stats'));
 app.use('/api/ghost-projects', require('./routes/ghostProjects'));
-app.use('/api/reports', require('./routes/reports'));
-app.use('/api/ai', require('./routes/ai'));
+app.use('/api/reports', reportLimiter, require('./routes/reports'));
+app.use('/api/ai', aiLimiter, require('./routes/ai'));
 app.use('/api/sync', require('./routes/ocdsSync'));
 app.use('/api/admin', require('./routes/admin'));
 
@@ -34,6 +60,6 @@ async function start() {
   const { pool } = require('./db');
   const result = await pool.query("SELECT COUNT(*) FROM contracts WHERE data_type = 'reference'");
   if (parseInt(result.rows[0].count) === 0) await seed();
-  app.listen(PORT, () => console.log(`✓ KenyaWatch API running on :${PORT}`));
+  app.listen(PORT, () => console.log(`KenyaWatch API running on :${PORT}`));
 }
 start().catch(console.error);

@@ -3,18 +3,37 @@ const router = express.Router();
 const fetch = require('node-fetch');
 const { pool } = require('../db');
 const { scoreContract } = require('../utils/riskEngine');
+
 router.post('/ocds', async (req, res) => {
   const { year, county } = req.body || {};
   if (!year) return res.status(400).json({ error: 'year required' });
   try {
-    const url = `https://data.open-contracting.org/releases.json?year=${year}` + (county ? `&buyer=${encodeURIComponent(county)}` : '');
-    const r = await fetch(url, { timeout: 15000 });
+    const url = `https://data.open-contracting.org/api/v0/releases.json?year=${year}` + (county ? `&buyer.name=${encodeURIComponent(county)}` : '');
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 20000);
+    const r = await fetch(url, {
+      signal: controller.signal,
+      headers: { 'Accept': 'application/json' }
+    });
+    clearTimeout(timeout);
     if (!r.ok) throw new Error(`OCDS registry returned ${r.status}`);
     const data = await r.json();
     const releases = data?.releases || [];
     let added = 0;
     for (const rel of releases.slice(0, 100)) {
-      const contract = { contract_id: `OCDS-${rel.ocid || rel.id}`, county: rel.buyer?.name || county || null, sector: rel.tender?.procurementMethodDetails || null, year, title: rel.tender?.title || 'Untitled', supplier: rel.awards?.[0]?.suppliers?.[0]?.name || null, value_kes: Math.round(rel.tender?.value?.amount || 0), bid_type: rel.tender?.procurementMethod || null, scope: rel.tender?.description || null, award_date: rel.awards?.[0]?.date || null, data_type: 'live_sync' };
+      const contract = {
+        contract_id: `OCDS-${rel.ocid || rel.id}`,
+        county: rel.buyer?.name || county || null,
+        sector: rel.tender?.procurementMethodDetails || null,
+        year,
+        title: rel.tender?.title || 'Untitled',
+        supplier: rel.awards?.[0]?.suppliers?.[0]?.name || null,
+        value_kes: Math.round(rel.tender?.value?.amount || 0),
+        bid_type: rel.tender?.procurementMethod || null,
+        scope: rel.tender?.description || null,
+        award_date: rel.awards?.[0]?.date || null,
+        data_type: 'live_sync'
+      };
       const scored = scoreContract(contract);
       try {
         await pool.query(`INSERT INTO contracts (contract_id,county,sector,year,title,supplier,value_kes,bid_type,scope,award_date,risk_score,risk_flags,data_type) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) ON CONFLICT (contract_id) DO NOTHING`,

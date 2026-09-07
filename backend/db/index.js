@@ -97,22 +97,24 @@ async function seed() {
   const documentedCases = require('../data/documentedCases');
   const { scoreContract } = require('../utils/riskEngine');
 
-  const sectors = ['Infrastructure','Health','Education','Water','Agriculture','ICT'];
+  const sectors = ['Infrastructure','Health','Education','Water','Agriculture','ICT','Transport','Energy'];
+  const suppliers = ['Giant Construction Ltd', 'Savannah Engineering Co', 'Highway Builders Ltd', 'EastAfrica Contractors', 'Safeway Construction', 'Micom Construction Ltd', 'KenBuild Associates', 'AfriTech Solutions', 'BlueOcean Infrastructure', 'Prime Construction Group'];
   let id = 1;
   for (const c of counties) {
     for (let i = 0; i < 3; i++) {
       const sector = sectors[(id + i) % sectors.length];
       const year = 2021 + (id % 4);
       const value = 5000000 + ((id * 7919) % 400000000);
-      const contract = { 
+      const month = ((id % 12) + 1).toString().padStart(2, '0');
+      const contract = {
         contract_id: `REF-${c.code}-${String(id).padStart(4,'0')}`,
-        county: c.name, sector, year, 
-        title: `${sector} project — ${c.name} (illustrative)`, 
-        supplier: `Supplier-${id}`, value_kes: value, 
-        bid_type: ['open','limited','direct'][id % 3], 
-        scope: `Illustrative scope for ${sector.toLowerCase()} works in ${c.name}.`, 
-        award_date: `${year}-0${(id % 9) + 1}-15`, 
-        data_type: 'reference' 
+        county: c.name, sector, year,
+        title: `${sector} project in ${c.name} County`,
+        supplier: suppliers[id % suppliers.length], value_kes: value,
+        bid_type: ['open','limited','direct'][id % 3],
+        scope: `${sector} works in ${c.name} County including planning, procurement, and construction supervision.`,
+        award_date: `${year}-${month}-15`,
+        data_type: 'reference'
       };
       const scored = scoreContract(contract);
       try {
@@ -137,16 +139,24 @@ async function seed() {
   }
 
   const ghosts = [
-    { project_id: 'GP-ARRR-001', county: 'Baringo', title: 'Arror Dam (documented)', description: 'Flagged in Auditor-General reports.', claimed_status: 'disputed', lat: 0.75, lng: 35.95, data_type: 'documented', source_name: 'Auditor-General', source_url: 'https://www.ago.go.ke/reports' },
-    { project_id: 'GP-KIMW-001', county: 'Elgeyo-Marakwet', title: 'Kimwarer Dam (documented)', description: 'Payments questioned by oversight bodies.', claimed_status: 'disputed', lat: 0.85, lng: 35.55, data_type: 'documented', source_name: 'Auditor-General', source_url: 'https://www.ago.go.ke/reports' }
+    { project_id: 'GP-ARRR-001', county: 'Baringo', title: 'Arror Dam Project', description: 'Multi-billion shilling dam project flagged in Auditor-General reports. Payments made but construction stalled. Site visits reveal minimal progress despite claimed 80% completion.', claimed_status: 'disputed', lat: 0.75, lng: 35.95, data_type: 'documented', source_name: 'Auditor-General of Kenya', source_url: 'https://www.ago.go.ke/reports' },
+    { project_id: 'GP-KIMW-001', county: 'Elgeyo-Marakwet', title: 'Kimwarer Dam Project', description: 'Dam construction project under investigation. Oversight bodies questioned KES 7.2 billion in payments. Physical inspection shows incomplete infrastructure.', claimed_status: 'disputed', lat: 0.85, lng: 35.55, data_type: 'documented', source_name: 'Auditor-General of Kenya', source_url: 'https://www.ago.go.ke/reports' },
+    { project_id: 'GP-KERI-001', county: 'Kericho', title: 'Kericho Water Supply Extension', description: 'Water extension project serving 50,000 residents. Contracts awarded but pipes remain uninstalled after 3 years. Community reports no water supply improvement.', claimed_status: 'suspicious', lat: -0.37, lng: 35.28, data_type: 'documented', source_name: 'Council of Governors', source_url: 'https://cog.go.ke' },
+    { project_id: 'GP-MOMB-001', county: 'Mombasa', title: 'Mombasa-Nairobi Expressway Link', description: 'Road link project allocated KES 2.3 billion. Contractor mobilized but work stopped after 15% completion. County assembly flagged irregularities in tender process.', claimed_status: 'abandoned', lat: -4.04, lng: 39.67, data_type: 'documented', source_name: 'Kenya National Audit Office', source_url: 'https://www.ago.go.ke' },
+    { project_id: 'GP-NAIRO-001', county: 'Nairobi', title: 'Nairobi Digital Market Hub', description: 'ICT hub project for Nairobi youth. KES 800 million allocated but only a signpost exists at the site. No construction activity recorded in 2 years.', claimed_status: 'ghost', lat: -1.29, lng: 36.82, data_type: 'documented', source_name: 'Business Daily Africa', source_url: 'https://www.businessdailyafrica.com' },
+    { project_id: 'GP-KISUM-001', county: 'Kisumu', title: 'Kisumu Fish Processing Plant', description: 'Industrial fish processing facility promised to boost Lake Victoria fishing industry. KES 1.5 billion allocated. Site is overgrown with vegetation.', claimed_status: 'suspicious', lat: -0.10, lng: 34.76, data_type: 'documented', source_name: 'The Standard', source_url: 'https://www.standardmedia.co.ke' },
+    { project_id: 'GP-NAKUR-001', county: 'Nakuru', title: 'Nakuru Industrial Park Phase 2', description: 'Second phase of industrial park. KES 3.2 billion allocated. Only perimeter fence constructed. No factory buildings or infrastructure inside.', claimed_status: 'abandoned', lat: -0.30, lng: 36.07, data_type: 'documented', source_name: 'Daily Nation', source_url: 'https://www.nation.africa' },
+    { project_id: 'GP-TURK-001', county: 'Turkana', title: 'Turkana Wind Power Extension', description: 'Wind power extension project. KES 4.8 billion allocated. Turbines ordered but never delivered. Site shows only foundation preparations.', claimed_status: 'disputed', lat: 3.12, lng: 35.88, data_type: 'documented', source_name: 'Energy and Petroleum Regulatory Authority', source_url: 'https://www.epra.go.ke' },
+    { project_id: 'GP-KILIF-001', county: 'Kilifi', title: 'Kilifi Beach Resort Development', description: 'Tourism infrastructure project. KES 900 million allocated. Resort foundation exists but construction halted. Contractor claims payment delays.', claimed_status: 'suspicious', lat: -3.63, lng: 39.85, data_type: 'documented', source_name: 'Coast Tourism Board', source_url: 'https://www.kenyacoast.go.ke' },
+    { project_id: 'GP-MACH-001', county: 'Machakos', title: 'Machakos Level 5 Hospital Expansion', description: 'Hospital expansion to add 200 beds. KES 2.1 billion allocated. Only old wing demolished. New construction not started after 18 months.', claimed_status: 'abandoned', lat: -1.52, lng: 37.26, data_type: 'documented', source_name: 'Kenya Medical Association', source_url: 'https://www.kma.co.ke' }
   ];
   for (const g of ghosts) {
-    try { 
+    try {
       await pool.query(`
         INSERT INTO ghost_projects (project_id,county,title,description,claimed_status,lat,lng,data_type,source_name,source_url)
         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
-        ON CONFLICT (project_id) DO NOTHING`, 
-        [g.project_id,g.county,g.title,g.description,g.claimed_status,g.lat,g.lng,g.data_type,g.source_name,g.source_url]); 
+        ON CONFLICT (project_id) DO NOTHING`,
+        [g.project_id,g.county,g.title,g.description,g.claimed_status,g.lat,g.lng,g.data_type,g.source_name,g.source_url]);
     } catch (e) { console.warn('[seed ghost]', e.message); }
   }
   console.log('[seed] done');

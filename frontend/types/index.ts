@@ -30,6 +30,7 @@ export interface GhostProject {
   data_type: string;
   source_name?: string;
   source_url?: string;
+  created_at: string;
 }
 
 export interface ChatMessage {
@@ -53,4 +54,15 @@ export interface ContractsMeta {
   sectors: string[];
   years: number[];
   data_types: string[];
+}
+
+export interface Report {
+  id: number;
+  case_number: string;
+  county?: string;
+  category?: string;
+  summary: string;
+  details?: string;
+  status: string;
+  created_at: string;
 }
