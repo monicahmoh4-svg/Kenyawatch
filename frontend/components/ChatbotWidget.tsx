@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { MessageCircle, X, Send, Bot, User, Sparkles } from "lucide-react"
+import { MessageCircle, X, Send, Bot, User, Sparkles, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { api } from "@/lib/api"
@@ -31,6 +31,7 @@ export function ChatbotWidget() {
   ])
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [lastFailedMessage, setLastFailedMessage] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -54,6 +55,7 @@ export function ChatbotWidget() {
     const userMessage: Message = { role: "user", content: text.trim(), timestamp: new Date() }
     setMessages((prev) => [...prev, userMessage])
     setInput("")
+    setLastFailedMessage(null)
     setIsLoading(true)
 
     try {
@@ -64,17 +66,24 @@ export function ChatbotWidget() {
         timestamp: new Date(),
       }
       setMessages((prev) => [...prev, botMessage])
-    } catch {
+    } catch (err: any) {
+      const apiMsg = err?.response?.data?.error
+      const fallbackContent = apiMsg
+        ? `${apiMsg} You can try rephrasing your question or ask something else.`
+        : "I'm having trouble connecting to the server right now. This could be a temporary issue. Please try again in a moment."
+      setLastFailedMessage(text.trim())
       setMessages((prev) => [
         ...prev,
-        {
-          role: "assistant",
-          content: "Sorry, I'm having trouble connecting. Please try again later.",
-          timestamp: new Date(),
-        },
+        { role: "assistant", content: fallbackContent, timestamp: new Date() },
       ])
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const retryLastMessage = () => {
+    if (lastFailedMessage) {
+      sendMessage(lastFailedMessage)
     }
   }
 
@@ -143,7 +152,12 @@ export function ChatbotWidget() {
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 bg-slate-50/50">
+          <div
+            className="flex-1 overflow-y-auto px-4 py-4 space-y-4 bg-slate-50/50"
+            role="log"
+            aria-live="polite"
+            aria-label="Chat messages"
+          >
             {messages.map((msg, i) => (
               <div
                 key={i}
@@ -163,6 +177,16 @@ export function ChatbotWidget() {
                   )}
                 >
                   {msg.content}
+                  {msg.role === "assistant" && lastFailedMessage && i === messages.length - 1 && !isLoading && (
+                    <button
+                      onClick={retryLastMessage}
+                      className="mt-2 flex items-center gap-1 text-xs font-medium text-teal-600 hover:text-teal-700 transition-colors"
+                      aria-label="Retry last message"
+                    >
+                      <RefreshCw className="h-3 w-3" />
+                      Try again
+                    </button>
+                  )}
                 </div>
                 {msg.role === "user" && (
                   <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-200 mt-0.5">
@@ -197,6 +221,7 @@ export function ChatbotWidget() {
                 <button
                   key={action}
                   onClick={() => sendMessage(action)}
+                  aria-label={`Quick action: ${action}`}
                   className="rounded-full border border-teal-200 bg-teal-50 px-3 py-1.5 text-xs font-medium text-teal-700 transition-colors hover:bg-teal-100 hover:border-teal-300"
                 >
                   {action}
@@ -216,6 +241,7 @@ export function ChatbotWidget() {
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask me anything..."
               disabled={isLoading}
+              aria-label="Type your message"
               className="flex-1 rounded-full border-slate-200 bg-slate-50 text-sm focus:bg-white focus:ring-teal-500"
             />
             <Button

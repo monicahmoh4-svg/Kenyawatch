@@ -1,35 +1,39 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Send, Bot, User, AlertCircle, Sparkles, Shield, MessageSquare } from "lucide-react"
+import { Send, Bot, User, AlertCircle, Sparkles, Shield, MessageSquare, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { chatApi } from "@/lib/api"
+import { api } from "@/lib/api"
 import { type ChatMessage } from "@/types"
 
 export default function ChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState("")
   const [loading, setLoading] = useState(false)
+  const [lastUserMessage, setLastUserMessage] = useState("")
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
 
-  const handleSend = async () => {
-    if (!input.trim() || loading) return
-    const userMessage: ChatMessage = { role: "user", content: input, timestamp: new Date() }
+  const handleSend = async (messageOverride?: string) => {
+    const text = messageOverride || input.trim()
+    if (!text || loading) return
+    const userMessage: ChatMessage = { role: "user", content: text, timestamp: new Date() }
     setMessages(prev => [...prev, userMessage])
     setInput("")
+    setLastUserMessage(text)
     setLoading(true)
     try {
-      const res = await chatApi.send(input)
+      const history = messages.map(m => ({ role: m.role, content: m.content }))
+      const res = await api.post("/api/ai/chat", { message: text, history })
       setMessages(prev => [...prev, { role: "assistant", content: res.data.reply, timestamp: new Date() }])
     } catch (error: any) {
-      const errorMsg = error?.response?.data?.error || "Sorry, I encountered an error. Please try again."
-      setMessages(prev => [...prev, { role: "assistant", content: errorMsg, timestamp: new Date() }])
+      const errorMsg = error?.response?.data?.error || "Sorry, the AI service is temporarily unavailable. This might be due to high demand or a temporary network issue."
+      setMessages(prev => [...prev, { role: "assistant", content: errorMsg, timestamp: new Date(), isError: true }])
     } finally {
       setLoading(false)
     }
@@ -74,7 +78,7 @@ export default function ChatPage() {
               <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
               <div className="text-sm text-blue-800">
                 <p className="font-semibold mb-1">How it works:</p>
-                <p>I have access to the live procurement database with {">"}140 contracts across all 47 counties. I always cite data sources and never present synthetic data as fact. Ask me about specific counties, sectors, risk patterns, or corruption indicators.</p>
+                <p>I have access to the live procurement database with thousands of contracts across all 47 counties. I always cite data sources and never present synthetic data as fact. Ask me about specific counties, sectors, risk patterns, or corruption indicators.</p>
               </div>
             </div>
           </CardContent>
@@ -119,6 +123,16 @@ export default function ChatPage() {
                       : "bg-white border border-slate-200 shadow-sm"
                   }`}>
                     <p className="text-sm whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                    {msg.isError && i === messages.length - 1 && (
+                      <button
+                        onClick={() => handleSend(lastUserMessage)}
+                        disabled={loading}
+                        className="mt-3 flex items-center gap-1.5 text-xs font-medium text-purple-600 hover:text-purple-700 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-lg transition-colors"
+                      >
+                        <RefreshCw className="h-3 w-3" />
+                        Try again
+                      </button>
+                    )}
                   </div>
                   {msg.role === "user" && (
                     <div className="w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center flex-shrink-0">

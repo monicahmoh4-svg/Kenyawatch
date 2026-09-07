@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Shield, Menu, X, ExternalLink, Database, Settings } from "lucide-react"
+import { Shield, Menu, X, ExternalLink, Database } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
@@ -14,7 +14,6 @@ const navigation = [
   { name: "Ghost Projects", href: "/ghost-projects" },
   { name: "Report", href: "/report" },
   { name: "AI Investigator", href: "/chat" },
-  { name: "Admin", href: "/admin", icon: Settings },
 ]
 
 export function Header() {

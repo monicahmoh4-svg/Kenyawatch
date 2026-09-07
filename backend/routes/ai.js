@@ -38,8 +38,46 @@ async function fetchGemini(apiKey, prompt, modelIndex = 0) {
   return data?.candidates?.[0]?.content?.parts?.[0]?.text || null;
 }
 
-function localRuleBasedResponse(message, contracts, ghosts, stats) {
+function localRuleBasedResponse(message, contracts, ghosts, stats, extraDb) {
   const lower = message.toLowerCase();
+
+  if (/^(hello|hi|hey|help|howdy|greetings)/i.test(lower)) {
+    return `Hello! I'm the KenyaWatch AI Assistant. I can help you with:\n\n- Procurement data across Kenya's 47 counties\n- Corruption risk analysis\n- Ghost project information\n- How to report corruption\n- Contract search and analysis\n\nDatabase: ${stats.total || 0} contracts, ${stats.ghosts || 0} ghost projects tracked.\n\nWhat would you like to know?`;
+  }
+
+  if (/how many contract|total contract|number of contract|count.*contract/i.test(lower)) {
+    const breakdown = extraDb?.sectorBreakdown?.length
+      ? `\n\nTop sectors:\n${extraDb.sectorBreakdown.slice(0, 5).map(s => `- ${s.sector || 'Unknown'}: ${s.count} contracts`).join('\n')}`
+      : '';
+    return `There are currently ${stats.total || 0} non-reference contracts in the KenyaWatch database across all 47 counties.${breakdown}\n\nUse the dashboard to browse and filter contracts by county, sector, year, or risk level.`;
+  }
+
+  if (/most corrupt|highest risk|riskiest|critical risk|top risk/i.test(lower)) {
+    const topRisk = contracts.slice(0, 8);
+    if (topRisk.length > 0) {
+      const list = topRisk.map(c =>
+        `- ${c.title} (${c.county}) — KES ${(c.value_kes || 0).toLocaleString()} | Risk: ${c.risk_score}/100`
+      ).join('\n');
+      return `Top ${topRisk.length} highest-risk contracts in the database:\n\n${list}\n\nRisk scores are calculated based on procurement red flags like single-source bidding, high values, vague scopes, and auditor-general flags. Use the dashboard to sort by risk score.`;
+    }
+    return `No high-risk contracts found in the database yet. Risk scores are calculated when contracts are imported from OCDS feeds.`;
+  }
+
+  if (/sector|which sector|sectors/i.test(lower)) {
+    if (extraDb?.sectorBreakdown?.length) {
+      const list = extraDb.sectorBreakdown.map(s => `- ${s.sector || 'Unknown'}: ${s.count} contracts`).join('\n');
+      return `Sector breakdown from the database:\n\n${list}\n\nAsk about a specific sector for more details.`;
+    }
+    return `Sectors tracked include: Roads, Health, Education, Water & Sanitation, Energy, ICT, Agriculture, Infrastructure, Transport, Environment, Housing, Public Works, Social Services, and Trade.`;
+  }
+
+  if (/year|timeline|when|over time|trend/i.test(lower)) {
+    if (extraDb?.yearBreakdown?.length) {
+      const list = extraDb.yearBreakdown.map(y => `- ${y.year}: ${y.count} contracts`).join('\n');
+      return `Year breakdown of contracts:\n\n${list}\n\nAsk about a specific year for more details.`;
+    }
+    return `Contracts in the database span multiple years. Use the dashboard filters to view contracts by year.`;
+  }
 
   if (/ghost|phantom|missing|disappear/i.test(lower)) {
     if (ghosts.length === 0) return 'No documented ghost projects found in the database.';
@@ -100,7 +138,7 @@ function localRuleBasedResponse(message, contracts, ghosts, stats) {
     return `Use the contract search on the dashboard to find specific contracts. You can search by title, supplier, county, or contract ID.`;
   }
 
-  return `I'm KenyaWatch AI Assistant. I can help you with:\n\n- Procurement data for Kenya's 47 counties\n- Corruption risk scoring explained\n- Ghost project information\n- How to report corruption\n- Contract search and analysis\n- Sector-specific procurement data\n\nDatabase: ${stats.total || 0} contracts, ${stats.ghosts || 0} ghost projects tracked.\n\nAsk me anything about Kenyan public procurement!`;
+  return `I'm KenyaWatch AI Assistant. I can help you with:\n\n- Procurement data for Kenya's 47 counties\n- Corruption risk scoring explained\n- Ghost project information\n- How to report corruption\n- Contract search and analysis\n- Sector-specific procurement data\n\nDatabase: ${stats.total || 0} contracts, ${stats.ghosts || 0} ghost projects tracked.\n\nTry asking about specific counties, sectors, risk levels, or corruption patterns.`;
 }
 
 router.post('/chat', async (req, res) => {
@@ -115,7 +153,7 @@ router.post('/chat', async (req, res) => {
 
     const apiKey = process.env.GEMINI_API_KEY;
 
-    const [contractCtx, ghostCtx, statsCtx, totalCount, ghostCount] = await Promise.all([
+    const [contractCtx, ghostCtx, statsCtx, totalCount, ghostCount, sectorCtx, yearCtx] = await Promise.all([
       pool.query(
         "SELECT contract_id, county, sector, year, title, supplier, value_kes, bid_type, risk_score, risk_flags, data_type FROM contracts WHERE data_type <> 'reference' ORDER BY risk_score DESC LIMIT 50"
       ),
@@ -127,6 +165,12 @@ router.post('/chat', async (req, res) => {
       ),
       pool.query("SELECT COUNT(*) FROM contracts WHERE data_type <> 'reference'"),
       pool.query('SELECT COUNT(*) FROM ghost_projects'),
+      pool.query(
+        "SELECT COALESCE(sector, 'Unknown') as sector, COUNT(*) as count FROM contracts WHERE data_type <> 'reference' GROUP BY sector ORDER BY count DESC"
+      ),
+      pool.query(
+        "SELECT year, COUNT(*) as count FROM contracts WHERE data_type <> 'reference' AND year IS NOT NULL GROUP BY year ORDER BY year DESC"
+      ),
     ]);
 
     const contracts = contractCtx.rows;
@@ -134,12 +178,18 @@ router.post('/chat', async (req, res) => {
     const countyStats = statsCtx.rows;
     const totalContracts = Number(totalCount.rows[0].count);
     const totalGhosts = Number(ghostCount.rows[0].count);
+    const sectorStats = sectorCtx.rows;
+    const yearStats = yearCtx.rows;
 
     if (!apiKey) {
       const reply = localRuleBasedResponse(message, contracts, ghosts, {
         total: totalContracts,
         ghosts: totalGhosts,
         countyBreakdown: countyStats,
+        sectorBreakdown: sectorStats,
+      }, {
+        sectorBreakdown: sectorStats,
+        yearBreakdown: yearStats,
       });
       return res.json({ reply, source: 'local' });
     }
@@ -158,6 +208,14 @@ router.post('/chat', async (req, res) => {
     const statsText = countyStats.length
       ? countyStats.map(r => `- ${r.county}: ${r.count} contracts, avg risk: ${Math.round(r.avg_risk || 0)}`).join('\n')
       : 'No county statistics available.';
+
+    const sectorText = sectorStats.length
+      ? sectorStats.map(r => `- ${r.sector}: ${r.count} contracts`).join('\n')
+      : 'No sector statistics available.';
+
+    const yearText = yearStats.length
+      ? yearStats.map(r => `- ${r.year}: ${r.count} contracts`).join('\n')
+      : 'No year statistics available.';
 
     const systemPrompt = `You are KenyaWatch AI, a civic-tech assistant for Kenyan public procurement accountability. You help citizens, journalists, and oversight bodies understand procurement data and detect corruption patterns.
 
@@ -191,7 +249,13 @@ ${contextText}
 ${ghostText}
 
 --- COUNTY STATISTICS ---
-${statsText}`;
+${statsText}
+
+--- SECTOR BREAKDOWN ---
+${sectorText}
+
+--- YEAR BREAKDOWN ---
+${yearText}`;
 
     const messages = [];
     if (Array.isArray(history) && history.length > 0) {
@@ -218,6 +282,10 @@ ${statsText}`;
         total: totalContracts,
         ghosts: totalGhosts,
         countyBreakdown: countyStats,
+        sectorBreakdown: sectorStats,
+      }, {
+        sectorBreakdown: sectorStats,
+        yearBreakdown: yearStats,
       });
       return res.json({ reply, source: 'local_fallback' });
     }
