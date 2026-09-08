@@ -1,7 +1,8 @@
 "use client"
 
-import { useEffect, useState, useCallback, useRef } from "react"
-import { Search, Filter, Eye, ExternalLink, X, Calendar, MapPin, Building2, AlertTriangle, FileText, DollarSign, Tag } from "lucide-react"
+import { Suspense, useEffect, useState, useCallback, useRef } from "react"
+import { useSearchParams } from "next/navigation"
+import { Search, Filter, Eye, ExternalLink, X, Calendar, MapPin, Building2, AlertTriangle, FileText, DollarSign, Tag, Download } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -11,7 +12,16 @@ import { contractsApi } from "@/lib/api"
 import { getRiskLevel, dataTypeConfig, formatCurrency } from "@/lib/utils"
 import { type Contract } from "@/types"
 
-export default function ContractsPage() {
+export default function ContractsPageWrapper() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-slate-50 flex items-center justify-center"><div className="w-6 h-6 border-2 border-teal-600 border-t-transparent rounded-full animate-spin" /></div>}>
+      <ContractsPage />
+    </Suspense>
+  )
+}
+
+function ContractsPage() {
+  const searchParams = useSearchParams()
   const [contracts, setContracts] = useState<any[]>([])
   const [meta, setMeta] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -22,7 +32,8 @@ export default function ContractsPage() {
   const modalRef = useRef<HTMLDivElement>(null)
 
   const [filters, setFilters] = useState({
-    county: "", sector: "", year: "", risk_level: "", data_type: "", search: "",
+    county: "", sector: "", year: "", risk_level: "", data_type: "",
+    search: searchParams.get("search") || "",
   })
 
   const loadContracts = useCallback(async () => {
@@ -53,6 +64,23 @@ export default function ContractsPage() {
   useEffect(() => { loadMeta() }, [])
 
   const applyFilters = () => { setPage(1) }
+
+  const exportCSV = () => {
+    const headers = ["Contract ID", "Title", "County", "Sector", "Year", "Supplier", "Value (KES)", "Risk Score", "Data Type", "Source"]
+    const rows = contracts.map(c => [
+      c.contract_id, `"${(c.title || '').replace(/"/g, '""')}"`,
+      c.county || '', c.sector || '', c.year || '', `"${(c.supplier || '').replace(/"/g, '""')}"`,
+      c.value_kes || 0, c.risk_score || 0, c.data_type || '', c.source_name || ''
+    ])
+    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `kenyawatch-contracts-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
 
   const handleViewContract = async (contract: any) => {
     setDetailLoading(true)
@@ -94,6 +122,9 @@ export default function ContractsPage() {
             src="https://images.unsplash.com/photo-1450101499163-c8848e968838?w=1920&q=80"
             alt="Government contracts"
             className="w-full h-full object-cover"
+            onError={(e) => {
+              e.currentTarget.src = "https://images.unsplash.com/photo-1590845077913-1e9e640704e5?w=1920&q=80"
+            }}
           />
           <div className="absolute inset-0 bg-slate-950/90" />
         </div>
@@ -188,6 +219,9 @@ export default function ContractsPage() {
           <p className="text-sm text-slate-500">
             Showing <span className="font-medium text-slate-700">{contracts.length}</span> of <span className="font-medium text-slate-700">{total}</span> contracts
           </p>
+          <Button onClick={exportCSV} variant="outline" size="sm" disabled={contracts.length === 0}>
+            <Download className="h-4 w-4 mr-2" /> Export CSV
+          </Button>
         </div>
 
         {/* Table */}

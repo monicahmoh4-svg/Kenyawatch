@@ -2,19 +2,30 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { Shield, FileText, MapPin, MessageSquare, ArrowRight, AlertTriangle, Eye, Users, ChevronDown, TrendingUp, Globe } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { Shield, FileText, MapPin, MessageSquare, ArrowRight, AlertTriangle, Eye, Users, ChevronDown, TrendingUp, Globe, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
 import { statsApi } from "@/lib/api"
 import { type DashboardStats } from "@/types"
 
 export default function HomePage() {
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [loading, setLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState("")
+  const router = useRouter()
 
   useEffect(() => {
     statsApi.getDashboard().then(res => setStats(res.data)).catch(console.error).finally(() => setLoading(false))
   }, [])
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (searchQuery.trim()) {
+      router.push(`/contracts?search=${encodeURIComponent(searchQuery.trim())}`)
+    }
+  }
 
   const features = [
     {
@@ -69,9 +80,12 @@ export default function HomePage() {
         {/* Background image */}
         <div className="absolute inset-0">
           <img
-            src="https://images.unsplash.com/photo-1741991110666-88115e724741?w=1920&q=85&auto=format&fit=crop"
-            alt="Nairobi skyline aerial view"
+            src="https://images.unsplash.com/photo-1590845077913-1e9e640704e5?w=1920&q=80&auto=format&fit=crop"
+            alt="Nairobi cityscape"
             className="w-full h-full object-cover"
+            onError={(e) => {
+              e.currentTarget.src = "https://images.unsplash.com/photo-1497436072909-60f360e1d4b1?w=1920&q=80"
+            }}
           />
           {/* Cinematic overlay - gradient from dark left to transparent right */}
           <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-900/80 to-slate-900/40" />
@@ -99,6 +113,23 @@ export default function HomePage() {
             <p className="text-lg md:text-xl text-slate-300/90 max-w-xl leading-relaxed mb-10 font-light">
               Track government contracts across all 47 counties. AI-powered risk detection. Open data. Built for accountability.
             </p>
+
+            <form onSubmit={handleSearch} className="flex flex-col sm:flex-row items-stretch gap-3 mb-8 max-w-xl">
+              <div className="relative flex-1">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Search contracts, counties, suppliers..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-11 pr-4 py-3.5 bg-white/10 border border-white/20 rounded-xl text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500/50 backdrop-blur-sm text-sm"
+                />
+              </div>
+              <Button type="submit" size="lg" className="bg-teal-600 hover:bg-teal-500 text-white px-6 py-3.5 rounded-xl font-medium shadow-lg shadow-teal-900/40 transition-all hover:shadow-teal-800/50">
+                <Search className="h-4 w-4 mr-2" />
+                Search
+              </Button>
+            </form>
 
             <div className="flex flex-col sm:flex-row items-start gap-4">
               <Link href="/contracts">
@@ -157,6 +188,9 @@ export default function HomePage() {
                       src={feature.image}
                       alt={feature.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      onError={(e) => {
+                        e.currentTarget.src = "https://images.unsplash.com/photo-1450101499163-c8848e968838?w=600&q=75"
+                      }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
                     <div className="absolute bottom-4 left-5 right-5">
@@ -227,6 +261,9 @@ export default function HomePage() {
             src="https://images.unsplash.com/photo-1590845077913-1e9e640704e5?w=1920&q=80"
             alt="Nairobi city"
             className="w-full h-full object-cover"
+            onError={(e) => {
+              e.currentTarget.src = "https://images.unsplash.com/photo-1497436072909-60f360e1d4b1?w=1920&q=80"
+            }}
           />
           <div className="absolute inset-0 bg-slate-950/90" />
         </div>
@@ -307,6 +344,9 @@ export default function HomePage() {
             src="https://images.unsplash.com/photo-1497436072909-60f360e1d4b1?w=1920&q=80"
             alt="Kenya landscape"
             className="w-full h-full object-cover"
+            onError={(e) => {
+              e.currentTarget.src = "https://images.unsplash.com/photo-1590845077913-1e9e640704e5?w=1920&q=80"
+            }}
           />
           <div className="absolute inset-0 bg-slate-950/85" />
         </div>

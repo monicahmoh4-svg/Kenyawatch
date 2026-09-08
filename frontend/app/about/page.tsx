@@ -18,6 +18,9 @@ export default function AboutPage() {
             src="https://images.unsplash.com/photo-1611348524140-53c9a25263d6?w=1920&q=80"
             alt="Nairobi skyline"
             className="w-full h-full object-cover"
+            onError={(e) => {
+              e.currentTarget.src = "https://images.unsplash.com/photo-1590845077913-1e9e640704e5?w=1920&q=80"
+            }}
           />
           <div className="absolute inset-0 bg-slate-950/85" />
         </div>

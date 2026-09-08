@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const fetch = require('node-fetch');
+const zlib = require('zlib');
+const readline = require('readline');
 const { pool } = require('../db');
 const { scoreContract } = require('../utils/riskEngine');
 
@@ -9,82 +11,97 @@ router.post('/ocds', async (req, res) => {
   if (!year) return res.status(400).json({ error: 'year required' });
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 30000);
+  const timeout = setTimeout(() => controller.abort(), 600000);
 
   try {
-    let releases = [];
-
-    const urls = [
-      `https://data.open-contracting.org/api/v0/releases.json?year=${year}${county ? `&buyer.name=${encodeURIComponent(county)}` : ''}`,
-      `https://data.open-contracting.org/api/v0/releases.json?year=${year}`,
-    ];
-
-    let lastError = null;
-    for (const url of urls) {
+    const url = `https://data.open-contracting.org/en/publication/147/download?name=${year}.jsonl.gz`;
+    console.log(`[ocds-sync] Downloading ${year} data from ${url}`);
+    
+    const response = await fetch(url, {
+      signal: controller.signal,
+      headers: { 'User-Agent': 'KenyaWatch/3.0', 'Accept-Encoding': 'gzip, deflate' },
+      timeout: 120000,
+    });
+    
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    
+    const gunzip = zlib.createGunzip();
+    const stream = response.body.pipe(gunzip);
+    const rl = readline.createInterface({ input: stream, crlfDelay: Infinity });
+    
+    let batch = [];
+    let added = 0;
+    let total = 0;
+    
+    for await (const line of rl) {
+      if (!line.trim()) continue;
+      total++;
+      
       try {
-        const r = await fetch(url, {
-          signal: controller.signal,
-          headers: { 'Accept': 'application/json', 'User-Agent': 'KenyaWatch/2.0' },
-          timeout: 25000,
-        });
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        const contentType = r.headers.get('content-type') || '';
-        if (!contentType.includes('json')) throw new Error(`Not JSON: ${contentType}`);
-        const data = await r.json();
-        releases = data?.releases || data?.results || [];
-        if (releases.length > 0) break;
+        const release = JSON.parse(line);
+        const contractId = `OCDS-${release.ocid || release.id || `rel-${total}`}`;
+        const contractCounty = release.buyer?.name || county || null;
+        const sector = release.tender?.mainProcurementCategory || null;
+        const title = release.tender?.title || null;
+        const supplier = release.awards?.[0]?.suppliers?.[0]?.name || null;
+        const valueKes = Math.round(release.awards?.[0]?.value?.amount || release.tender?.value?.amount || 0);
+        const bidType = release.tender?.procurementMethod || null;
+        const scope = release.tender?.description || null;
+        const awardDate = release.awards?.[0]?.date || release.tender?.tenderPeriod?.endDate || null;
+        
+        if (!title && !valueKes) continue;
+        
+        const contract = {
+          contract_id: contractId,
+          county: contractCounty,
+          sector,
+          year,
+          title,
+          supplier,
+          value_kes: valueKes,
+          bid_type: bidType,
+          scope,
+          award_date: awardDate,
+          data_type: 'live_sync',
+          source_name: 'PPIP OCDS - Kenya',
+          source_url: 'https://tenders.go.ke/ocds',
+        };
+        
+        const scored = scoreContract(contract);
+        batch.push([
+          contract.contract_id, contract.county, contract.sector, contract.year,
+          contract.title, contract.supplier, contract.value_kes, contract.bid_type,
+          contract.scope, contract.award_date, 'active', scored.risk_score,
+          JSON.stringify(scored.risk_flags), contract.data_type,
+          contract.source_name, contract.source_url,
+        ]);
+        
+        if (batch.length >= 500) {
+          await insertBatch(batch);
+          added += batch.length;
+          batch = [];
+          if (total % 1000 === 0) {
+            console.log(`[ocds-sync] Progress: ${total} processed, ${added} inserted`);
+          }
+        }
       } catch (e) {
-        lastError = e;
-        continue;
+        // Skip invalid JSON lines
       }
     }
-
+    
+    if (batch.length > 0) {
+      await insertBatch(batch);
+      added += batch.length;
+    }
+    
     clearTimeout(timeout);
-
-    if (releases.length === 0) {
-      await pool.query(
-        'INSERT INTO ocds_sync_log (year,county,records_added,status,error) VALUES ($1,$2,0,$3,$4)',
-        [year, county || null, 'no_data', lastError ? lastError.message : 'No releases found']
-      ).catch(() => {});
-      return res.json({
-        year, county: county || null, added: 0,
-        total_releases: 0,
-        note: 'OCDS API returned no data for this year. This may be due to API availability. Use /api/sync/import for bulk data import.'
-      });
-    }
-
-    let added = 0;
-    for (const rel of releases.slice(0, 500)) {
-      const contract = {
-        contract_id: `OCDS-${year}-${rel.ocid || rel.id || `rel-${added}`}`,
-        county: rel.buyer?.name || county || null,
-        sector: rel.tender?.procurementMethodDetails || rel.tender?.mainProcurementCategory || null,
-        year,
-        title: rel.tender?.title || 'Untitled',
-        supplier: rel.awards?.[0]?.suppliers?.[0]?.name || null,
-        value_kes: Math.round(rel.tender?.value?.amount || 0),
-        bid_type: rel.tender?.procurementMethod || null,
-        scope: rel.tender?.description || null,
-        award_date: rel.awards?.[0]?.date || rel.tender?.tenderPeriod?.endDate || null,
-        data_type: 'live_sync',
-        source_name: 'OCDS Open Contracting Data',
-        source_url: 'https://data.open-contracting.org'
-      };
-      const scored = scoreContract(contract);
-      try {
-        await pool.query(
-          `INSERT INTO contracts (contract_id,county,sector,year,title,supplier,value_kes,bid_type,scope,award_date,status,risk_score,risk_flags,data_type,source_name,source_url) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) ON CONFLICT (contract_id) DO NOTHING`,
-          [contract.contract_id, contract.county, contract.sector, contract.year, contract.title, contract.supplier, contract.value_kes, contract.bid_type, contract.scope, contract.award_date, 'active', scored.risk_score, JSON.stringify(scored.risk_flags), contract.data_type, contract.source_name, contract.source_url]
-        );
-        added++;
-      } catch (e) { /* skip duplicates */ }
-    }
-
+    
     await pool.query(
       'INSERT INTO ocds_sync_log (year,county,records_added,status) VALUES ($1,$2,$3,$4)',
       [year, county || null, added, 'ok']
     );
-    res.json({ year, county: county || null, added, total_releases: releases.length });
+    
+    res.json({ year, county: county || null, added, total_releases: total });
   } catch (e) {
     clearTimeout(timeout);
     await pool.query(
@@ -94,6 +111,29 @@ router.post('/ocds', async (req, res) => {
     res.status(500).json({ error: 'OCDS sync failed', detail: e.message });
   }
 });
+
+async function insertBatch(batch) {
+  if (batch.length === 0) return;
+  const cols = [
+    'contract_id', 'county', 'sector', 'year', 'title', 'supplier',
+    'value_kes', 'bid_type', 'scope', 'award_date', 'status', 'risk_score',
+    'risk_flags', 'data_type', 'source_name', 'source_url',
+  ];
+  const valueClauses = [];
+  const params = [];
+  for (let i = 0; i < batch.length; i++) {
+    const offset = i * cols.length;
+    const placeholders = cols.map((_, j) => `$${offset + j + 1}`);
+    valueClauses.push(`(${placeholders.join(',')})`);
+    params.push(...batch[i]);
+  }
+  const sql = `INSERT INTO contracts (${cols.join(',')}) VALUES ${valueClauses.join(',')} ON CONFLICT (contract_id) DO NOTHING`;
+  try {
+    await pool.query(sql, params);
+  } catch (e) {
+    console.warn(`[ocds-sync] Batch insert error: ${e.message.substring(0, 120)}`);
+  }
+}
 
 router.post('/import', async (req, res) => {
   const { county, sector, year_from, year_to } = req.body || {};

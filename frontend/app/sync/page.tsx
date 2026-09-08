@@ -21,6 +21,8 @@ export default function SyncPage() {
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
   const [meta, setMeta] = useState<any>(null)
+  const [importStatus, setImportStatus] = useState<any>(null)
+  const [importStatusLoading, setImportStatusLoading] = useState(false)
 
   const [filters, setFilters] = useState({
     county: "",
@@ -79,10 +81,9 @@ export default function SyncPage() {
     setSyncing(true)
     setSyncResult(null)
     try {
-      const res = await api.post('/api/sync/ocds', {
-        year: Number(selectedYear),
-        county: selectedCounty || undefined
-      })
+      const res = await api.post('/api/ocds/download-and-import', {
+        year: Number(selectedYear)
+      }, { timeout: 600000 })
       setSyncResult(res.data)
       loadSyncStatus()
       loadContracts()
@@ -93,9 +94,36 @@ export default function SyncPage() {
     }
   }
 
+  const handleAutoImport = async () => {
+    setSyncing(true)
+    setSyncResult(null)
+    try {
+      const res = await api.post('/api/ocds/auto-import', {}, { timeout: 600000 })
+      setSyncResult(res.data)
+      loadSyncStatus()
+      loadContracts()
+    } catch (e: any) {
+      setSyncResult({ error: e?.response?.data?.error || 'Auto-import failed' })
+    } finally {
+      setSyncing(false)
+    }
+  }
+
   const applyFilters = () => {
     setPage(1)
     loadContracts()
+  }
+
+  const checkImportStatus = async () => {
+    setImportStatusLoading(true)
+    try {
+      const res = await api.get('/api/ocds/import-status')
+      setImportStatus(res.data)
+    } catch (e) {
+      console.error('Failed to check import status:', e)
+    } finally {
+      setImportStatusLoading(false)
+    }
   }
 
   const years = Array.from({ length: 12 }, (_, i) => 2015 + i)
@@ -109,6 +137,9 @@ export default function SyncPage() {
             src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1920&q=80"
             alt="Data synchronization"
             className="w-full h-full object-cover"
+            onError={(e) => {
+              e.currentTarget.src = "https://images.unsplash.com/photo-1590845077913-1e9e640704e5?w=1920&q=80"
+            }}
           />
           <div className="absolute inset-0 bg-slate-950/90" />
         </div>
@@ -134,7 +165,45 @@ export default function SyncPage() {
             <p className="text-sm text-slate-600 mb-4">
               Fetch real contract data from Kenya's Public Procurement Information Portal (tenders.go.ke). Data is sourced from the Open Contracting Data Standard (OCDS) feed.
             </p>
-            <div className="grid md:grid-cols-4 gap-4 mb-4">
+            <div className="flex items-center gap-2 mb-4">
+              <Button
+                onClick={checkImportStatus}
+                disabled={importStatusLoading}
+                variant="ghost"
+                size="sm"
+                className="text-slate-600"
+              >
+                {importStatusLoading ? (
+                  <><Loader2 className="h-3 w-3 mr-1 animate-spin" /> Checking...</>
+                ) : (
+                  <><Database className="h-3 w-3 mr-1" /> Check Import Status</>
+                )}
+              </Button>
+            </div>
+            {importStatus && (
+              <div className="mb-4 p-4 bg-slate-50 border border-slate-200 rounded-lg">
+                <h3 className="text-sm font-semibold text-slate-800 mb-2">Current Database Status</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                  <div>
+                    <div className="text-slate-500">Total Contracts</div>
+                    <div className="font-semibold text-slate-900">{importStatus.total_contracts?.toLocaleString() || 0}</div>
+                  </div>
+                  <div>
+                    <div className="text-slate-500">By County</div>
+                    <div className="font-semibold text-slate-900">{importStatus.by_county?.length || 0} counties</div>
+                  </div>
+                  <div>
+                    <div className="text-slate-500">By Year</div>
+                    <div className="font-semibold text-slate-900">{importStatus.by_year?.length || 0} years</div>
+                  </div>
+                  <div>
+                    <div className="text-slate-500">Data Types</div>
+                    <div className="font-semibold text-slate-900">{importStatus.by_data_type?.length || 0} types</div>
+                  </div>
+                </div>
+              </div>
+            )}
+            <div className="grid md:grid-cols-5 gap-4 mb-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">Year</label>
                 <Select value={selectedYear} onValueChange={setSelectedYear}>
@@ -180,6 +249,20 @@ export default function SyncPage() {
                   <ArrowUpDown className="h-4 w-4 mr-2" /> Refresh Data
                 </Button>
               </div>
+              <div className="flex items-end">
+                <Button
+                  onClick={handleAutoImport}
+                  disabled={syncing}
+                  variant="outline"
+                  className="w-full border-teal-300 text-teal-700 hover:bg-teal-50"
+                >
+                  {syncing ? (
+                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Importing...</>
+                  ) : (
+                    <><Database className="h-4 w-4 mr-2" /> Import All Years</>
+                  )}
+                </Button>
+              </div>
             </div>
             {syncResult && (
               <div className={`p-4 rounded-lg ${syncResult.error ? 'bg-red-50 border border-red-200' : 'bg-green-50 border border-green-200'}`}>
@@ -191,11 +274,17 @@ export default function SyncPage() {
                 ) : (
                   <div className="flex items-center gap-2 text-green-700">
                     <CheckCircle className="h-5 w-5" />
-                    <span>Sync complete: {syncResult.added} new contracts added from {syncResult.total_releases} releases for {syncResult.year}</span>
+                    <span>Sync complete: {syncResult.stats?.inserted || syncResult.added || 0} new contracts added from {syncResult.stats?.total_processed || syncResult.total_releases || 0} releases for {selectedYear}</span>
                   </div>
                 )}
               </div>
             )}
+            <div className="mt-3 p-3 bg-slate-50 border border-slate-200 rounded-lg">
+              <p className="text-xs text-slate-600">
+                <strong>Bulk Import:</strong> Downloads the official OCDS dataset from data.open-contracting.org for Kenya. 
+                This imports real government procurement contracts from all 47 counties. The import may take a few minutes for large datasets.
+              </p>
+            </div>
           </div>
         </div>
 

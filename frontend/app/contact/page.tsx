@@ -16,6 +16,9 @@ export default function ContactPage() {
             src="https://images.unsplash.com/photo-1497436072909-60f360e1d4b1?w=1920&q=80"
             alt="Kenya landscape"
             className="w-full h-full object-cover"
+            onError={(e) => {
+              e.currentTarget.src = "https://images.unsplash.com/photo-1590845077913-1e9e640704e5?w=1920&q=80"
+            }}
           />
           <div className="absolute inset-0 bg-slate-950/85" />
         </div>
