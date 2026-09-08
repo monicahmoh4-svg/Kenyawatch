@@ -1,72 +1,6 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
-import { Bell, CheckCheck, AlertTriangle, AlertCircle, Info, Shield, Search, Filter, Volume2, VolumeX, Loader2, CheckCircle, X } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { alertsApi } from "@/lib/api"
-import { formatCurrency } from "@/lib/utils"
-
-const SEVERITY_CONFIG: Record<string, { color: string; bg: string; border: string; icon: any }> = {
-  critical: { color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200', icon: AlertTriangle },
-  high: { color: 'text-orange-600', bg: 'bg-orange-50', border: 'border-orange-200', icon: AlertCircle },
-  medium: { color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200', icon: Info },
-  low: { color: 'text-slate-600', bg: 'bg-slate-50', border: 'border-slate-200', icon: Info },
-}
-
-export default function AlertsPage() {
-  const [alerts, setAlerts] = useState<any[]>([])
-  const [total, setTotal] = useState(0)
-  const [loading, setLoading] = useState(true)
-  const [page, setPage] = useState(1)
-  const [stats, setStats] = useState<any>(null)
-  const [severity, setSeverity] = useState("")
-  const [acknowledged, setAcknowledged] = useState("")
-  const [soundEnabled, setSoundEnabled] = useState(true)
-  const [scanning, setScanning] = useState(false)
-  const prevUnreadCount = useRef(0)
-  const audioRef = useRef<HTMLAudioElement | null>(null)
-
-  const loadAlerts = useCallback(async () => {
-    setLoading(true)
-    try {
-      const params: any = { page, limit: 20 }
-      if (severity) params.severity = severity
-      if (acknowledged) params.acknowledged = acknowledged
-      const res = await alertsApi.list(params)
-      setAlerts(res.data.alerts)
-      setTotal(res.data.total)
-    } catch (e) {
-      console.error("Failed to load alerts:", e)
-    } finally {
-      setLoading(false)
-    }
-  }, [page, severity, acknowledged])
-
-  const loadStats = async () => {
-    try {
-      const res = await alertsApi.stats()
-      setStats(res.data)
-
-      if (res.data.unread > prevUnreadCount.current && soundEnabled) {
-        playAlertSound()
-      }
-      prevUnreadCount.current = res.data.unread
-    } catch {}
-  }
-
-  const playAlertSound = () => {
-    try {
-      if (!audioRef.current) {
-        audioRef.current = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdH+JkI+LhX12dX+DipCLhH11dH2BiI+LhHx0c3yAiI6KhHtzcnqAh42Jg3pycXl/h4yIg3lxcHd+hoyIg3hwb3Z9hYuHg3dwbXV8hIqGg3Zwa3R8g4mFg3Vvam97goeEg3RuaG56gYaDg3NtZ215gIWCg3JsZmx4f4SBg3FrZWt3foOAg3BqY2p2fYJ/gG9pYml1fIF+fm9oYWd0e4B9fW5nYGVzeX58fG1mX2RyeH17e2xlXmJxdnx6empkXGFwc3t5eGljW19vcnp4d2diWl5ucXl3dmZhWV1tcHd2dWVgV1xrbnZ1dGRfVltqbHV0c2NeVVppa3Nyc2JdU1loaXFxcWBcUlho
-
-Playing alert sound...</think>Now let me create the alerts page with sound notifications:<tool_call>
-<function=write>
-<parameter=content>"use client"
-
-import { useState, useEffect, useCallback, useRef } from "react"
 import { Bell, CheckCheck, AlertTriangle, AlertCircle, Info, Shield, Loader2, CheckCircle, Volume2, VolumeX } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -87,25 +21,28 @@ export default function AlertsPage() {
   const prevUnread = useRef(0)
   const audioCtxRef = useRef<AudioContext | null>(null)
 
-  const playAlertSound = () => {
+  const playAlertSound = useCallback(() => {
+    if (!soundEnabled) return
     try {
       if (!audioCtxRef.current) {
         audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)()
       }
       const ctx = audioCtxRef.current
+      if (ctx.state === "suspended") ctx.resume()
       const osc = ctx.createOscillator()
       const gain = ctx.createGain()
       osc.connect(gain)
       gain.connect(ctx.destination)
+      osc.type = "sine"
       osc.frequency.setValueAtTime(880, ctx.currentTime)
       osc.frequency.setValueAtTime(660, ctx.currentTime + 0.1)
       osc.frequency.setValueAtTime(880, ctx.currentTime + 0.2)
-      gain.gain.setValueAtTime(0.3, ctx.currentTime)
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5)
+      gain.gain.setValueAtTime(0.2, ctx.currentTime)
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4)
       osc.start(ctx.currentTime)
-      osc.stop(ctx.currentTime + 0.5)
-    } catch {}
-  }
+      osc.stop(ctx.currentTime + 0.4)
+    } catch (e) { /* audio not available */ }
+  }, [soundEnabled])
 
   const loadAlerts = useCallback(async () => {
     setLoading(true)
@@ -123,18 +60,18 @@ export default function AlertsPage() {
     }
   }, [page, severity, acknowledged])
 
-  const loadStats = async () => {
+  const loadStats = useCallback(async () => {
     try {
       const res = await alertsApi.stats()
       setStats(res.data)
-      if (res.data.unread > prevUnread.current && soundEnabled) {
+      if (res.data.unread > prevUnread.current) {
         playAlertSound()
       }
       prevUnread.current = res.data.unread
-    } catch {}
-  }
+    } catch (e) { /* ignore */ }
+  }, [playAlertSound])
 
-  useEffect(() => { loadAlerts(); loadStats() }, [loadAlerts])
+  useEffect(() => { loadAlerts(); loadStats() }, [loadAlerts, loadStats])
   useEffect(() => {
     const interval = setInterval(loadStats, 30000)
     return () => clearInterval(interval)
@@ -145,7 +82,7 @@ export default function AlertsPage() {
       await alertsApi.acknowledge(id)
       loadAlerts()
       loadStats()
-    } catch {}
+    } catch (e) { /* ignore */ }
   }
 
   const handleAcknowledgeAll = async () => {
@@ -153,7 +90,7 @@ export default function AlertsPage() {
       await alertsApi.acknowledgeAll()
       loadAlerts()
       loadStats()
-    } catch {}
+    } catch (e) { /* ignore */ }
   }
 
   const handleScan = async () => {
@@ -162,17 +99,21 @@ export default function AlertsPage() {
       await alertsApi.triggerScan()
       loadAlerts()
       loadStats()
-    } catch {} finally {
+    } catch (e) { /* ignore */ } finally {
       setScanning(false)
     }
   }
 
   const getSeverityConfig = (sev: string) => {
     switch (sev) {
-      case 'critical': return { color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200', icon: AlertTriangle, label: 'Critical' }
-      case 'high': return { color: 'text-orange-600', bg: 'bg-orange-50', border: 'border-orange-200', icon: AlertCircle, label: 'High' }
-      case 'medium': return { color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200', icon: Info, label: 'Medium' }
-      default: return { color: 'text-slate-600', bg: 'bg-slate-50', border: 'border-slate-200', icon: Info, label: 'Low' }
+      case "critical":
+        return { color: "text-red-600", bg: "bg-red-50", border: "border-red-200", icon: AlertTriangle, label: "Critical" }
+      case "high":
+        return { color: "text-orange-600", bg: "bg-orange-50", border: "border-orange-200", icon: AlertCircle, label: "High" }
+      case "medium":
+        return { color: "text-amber-600", bg: "bg-amber-50", border: "border-amber-200", icon: Info, label: "Medium" }
+      default:
+        return { color: "text-slate-600", bg: "bg-slate-50", border: "border-slate-200", icon: Info, label: "Low" }
     }
   }
 
@@ -222,13 +163,13 @@ export default function AlertsPage() {
             </div>
             <div className="border border-slate-200 bg-white rounded-xl p-5">
               <div className="text-2xl font-bold text-orange-600">
-                {stats.by_severity?.find((s: any) => s.severity === 'critical')?.count || 0}
+                {stats.by_severity?.find((s: any) => s.severity === "critical")?.count || 0}
               </div>
               <div className="text-sm text-slate-500">Critical</div>
             </div>
             <div className="border border-slate-200 bg-white rounded-xl p-5">
               <div className="text-2xl font-bold text-amber-600">
-                {stats.by_severity?.find((s: any) => s.severity === 'high')?.count || 0}
+                {stats.by_severity?.find((s: any) => s.severity === "high")?.count || 0}
               </div>
               <div className="text-sm text-slate-500">High Priority</div>
             </div>
@@ -283,7 +224,7 @@ export default function AlertsPage() {
                 return (
                   <div
                     key={alert.id}
-                    className={`border ${sev.border} ${sev.bg} rounded-lg p-4 ${alert.acknowledged ? 'opacity-60' : ''}`}
+                    className={`border ${sev.border} ${sev.bg} rounded-lg p-4 ${alert.acknowledged ? "opacity-60" : ""}`}
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex items-start gap-3 flex-1">
@@ -291,7 +232,7 @@ export default function AlertsPage() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
                             <Badge variant="outline" className={`${sev.color} text-xs`}>{sev.label}</Badge>
-                            <span className="text-xs text-slate-500">{alert.alert_type?.replace(/_/g, ' ')}</span>
+                            <span className="text-xs text-slate-500">{alert.alert_type?.replace(/_/g, " ")}</span>
                             {alert.contract_id && (
                               <span className="text-xs font-mono text-slate-400">{alert.contract_id}</span>
                             )}
