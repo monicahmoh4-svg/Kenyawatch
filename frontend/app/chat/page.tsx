@@ -55,9 +55,6 @@ export default function ChatPage() {
             src="https://images.unsplash.com/photo-1677442136019-21780ecad995?w=1920&q=80"
             alt="AI technology"
             className="w-full h-full object-cover"
-            onError={(e) => {
-              e.currentTarget.src = "https://images.unsplash.com/photo-1590845077913-1e9e640704e5?w=1920&q=80"
-            }}
           />
           <div className="absolute inset-0 bg-slate-950/90" />
         </div>

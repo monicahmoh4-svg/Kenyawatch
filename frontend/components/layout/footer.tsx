@@ -33,6 +33,7 @@ export function Footer() {
             <ul className="space-y-3 text-sm">
               <li><Link href="/contracts" className="text-slate-400 hover:text-teal-400 transition-colors">Contracts</Link></li>
               <li><Link href="/ghost-projects" className="text-slate-400 hover:text-teal-400 transition-colors">Ghost Projects</Link></li>
+              <li><Link href="/alerts" className="text-slate-400 hover:text-teal-400 transition-colors">Alert Center</Link></li>
               <li><Link href="/report" className="text-slate-400 hover:text-teal-400 transition-colors">Report Corruption</Link></li>
               <li><Link href="/chat" className="text-slate-400 hover:text-teal-400 transition-colors">AI Investigator</Link></li>
             </ul>

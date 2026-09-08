@@ -50,3 +50,18 @@ export const syncApi = {
   trigger: (data: any) => api.post('/api/sync/ocds', data),
   status: () => api.get('/api/sync/status'),
 }
+
+export const alertsApi = {
+  list: (params?: any) => api.get('/api/alerts', { params }),
+  unreadCount: () => api.get('/api/alerts/unread-count'),
+  stats: () => api.get('/api/alerts/stats'),
+  acknowledge: (id: number) => api.post(`/api/alerts/${id}/acknowledge`),
+  acknowledgeAll: () => api.post('/api/alerts/acknowledge-all'),
+  triggerScan: () => api.post('/api/alerts/scan'),
+  status: () => api.get('/api/alerts/status'),
+}
+
+export const eaccApi = {
+  list: (params?: any) => api.get('/api/eacc', { params }),
+  stats: () => api.get('/api/eacc/stats'),
+}

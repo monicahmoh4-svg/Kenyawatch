@@ -2,16 +2,18 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Shield, Menu, X, ExternalLink, Database } from "lucide-react"
+import { Shield, Menu, X, ExternalLink, Database, Bell } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useState, useEffect } from "react"
+import { AlertNotification } from "@/components/AlertNotification"
 
 const navigation = [
   { name: "Dashboard", href: "/" },
   { name: "Contracts", href: "/contracts" },
   { name: "Sync & Browse", href: "/sync", icon: Database },
   { name: "Ghost Projects", href: "/ghost-projects" },
+  { name: "Alerts", href: "/alerts", icon: Bell },
   { name: "Report", href: "/report" },
   { name: "AI Investigator", href: "/chat" },
 ]
@@ -74,17 +76,20 @@ export function Header() {
             </a>
           </nav>
 
-          {/* Mobile menu button */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="md:hidden h-9 w-9"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-expanded={mobileMenuOpen}
-            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
-          >
-            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </Button>
+          <div className="flex items-center gap-1">
+            <AlertNotification />
+            {/* Mobile menu button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden h-9 w-9"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-expanded={mobileMenuOpen}
+              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+            >
+              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </Button>
+          </div>
         </div>
 
         {/* Mobile Navigation */}

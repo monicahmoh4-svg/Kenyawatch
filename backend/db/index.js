@@ -13,20 +13,10 @@ const pool = new Pool({
 });
 
 async function ensureSchema() {
-  console.log('[schema] Dropping old tables for clean schema (force)...');
-  const drops = [
-    'DROP TABLE IF EXISTS contracts CASCADE',
-    'DROP TABLE IF EXISTS ghost_projects CASCADE',
-    'DROP TABLE IF EXISTS reports CASCADE',
-    'DROP TABLE IF EXISTS ocds_sync_log CASCADE',
-  ];
-  for (const sql of drops) {
-    try { await pool.query(sql); }
-    catch (e) { console.error('[drop]', e.message); }
-  }
+  console.log('[schema] Ensuring tables exist (safe mode)...');
 
   const tables = [
-    `CREATE TABLE contracts (
+    `CREATE TABLE IF NOT EXISTS contracts (
       id SERIAL PRIMARY KEY,
       contract_id TEXT UNIQUE,
       county TEXT,
@@ -39,14 +29,21 @@ async function ensureSchema() {
       scope TEXT,
       award_date DATE,
       status TEXT DEFAULT 'active',
-      risk_score INT,
-      risk_flags JSONB,
-      data_type TEXT NOT NULL CHECK (data_type IN ('documented','live_sync','manual_scan','reference')),
+      risk_score INT DEFAULT 0,
+      risk_flags JSONB DEFAULT '{}',
+      data_type TEXT NOT NULL DEFAULT 'reference',
       source_name TEXT,
       source_url TEXT,
-      created_at TIMESTAMPTZ DEFAULT NOW()
+      completion_date DATE,
+      completion_status TEXT,
+      last_scanned_at TIMESTAMPTZ,
+      alert_status TEXT DEFAULT 'none',
+      eacc_forwarded BOOLEAN DEFAULT false,
+      eacc_forwarded_at TIMESTAMPTZ,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW()
     );`,
-    `CREATE TABLE ghost_projects (
+    `CREATE TABLE IF NOT EXISTS ghost_projects (
       id SERIAL PRIMARY KEY,
       project_id TEXT UNIQUE,
       county TEXT,
@@ -55,12 +52,12 @@ async function ensureSchema() {
       claimed_status TEXT,
       lat DOUBLE PRECISION,
       lng DOUBLE PRECISION,
-      data_type TEXT NOT NULL CHECK (data_type IN ('documented','live_sync','manual_scan','reference')),
+      data_type TEXT NOT NULL DEFAULT 'reference',
       source_name TEXT,
       source_url TEXT,
       created_at TIMESTAMPTZ DEFAULT NOW()
     );`,
-    `CREATE TABLE reports (
+    `CREATE TABLE IF NOT EXISTS reports (
       id SERIAL PRIMARY KEY,
       case_number TEXT UNIQUE,
       county TEXT,
@@ -70,12 +67,43 @@ async function ensureSchema() {
       status TEXT DEFAULT 'received',
       created_at TIMESTAMPTZ DEFAULT NOW()
     );`,
-    `CREATE TABLE ocds_sync_log (
+    `CREATE TABLE IF NOT EXISTS ocds_sync_log (
       id SERIAL PRIMARY KEY,
       year INT,
       county TEXT,
-      records_added INT,
+      records_added INT DEFAULT 0,
       status TEXT,
+      error TEXT,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );`,
+    `CREATE TABLE IF NOT EXISTS alerts (
+      id SERIAL PRIMARY KEY,
+      contract_id TEXT,
+      alert_type TEXT NOT NULL,
+      severity TEXT NOT NULL DEFAULT 'medium',
+      message TEXT NOT NULL,
+      details JSONB DEFAULT '{}',
+      acknowledged BOOLEAN DEFAULT false,
+      acknowledged_at TIMESTAMPTZ,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );`,
+    `CREATE TABLE IF NOT EXISTS eacc_forwarding (
+      id SERIAL PRIMARY KEY,
+      contract_id TEXT NOT NULL,
+      alert_id INT,
+      status TEXT DEFAULT 'pending',
+      forwarded_at TIMESTAMPTZ DEFAULT NOW(),
+      response TEXT,
+      response_at TIMESTAMPTZ,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );`,
+    `CREATE TABLE IF NOT EXISTS scan_log (
+      id SERIAL PRIMARY KEY,
+      scan_type TEXT NOT NULL,
+      contracts_scanned INT DEFAULT 0,
+      alerts_generated INT DEFAULT 0,
+      duration_ms INT DEFAULT 0,
+      status TEXT DEFAULT 'completed',
       error TEXT,
       created_at TIMESTAMPTZ DEFAULT NOW()
     );`,
@@ -87,20 +115,41 @@ async function ensureSchema() {
   }
 
   const indexes = [
-    'CREATE INDEX idx_contracts_county ON contracts(county);',
-    'CREATE INDEX idx_contracts_year ON contracts(year);',
-    'CREATE INDEX idx_contracts_data_type ON contracts(data_type);',
-    'CREATE INDEX idx_contracts_risk ON contracts(risk_score);',
-    'CREATE INDEX idx_contracts_sector ON contracts(sector);',
-    'CREATE INDEX idx_contracts_value ON contracts(value_kes);',
-    'CREATE INDEX idx_ghost_county ON ghost_projects(county);',
-    'CREATE INDEX idx_reports_status ON reports(status);'
+    'CREATE INDEX IF NOT EXISTS idx_contracts_county ON contracts(county);',
+    'CREATE INDEX IF NOT EXISTS idx_contracts_year ON contracts(year);',
+    'CREATE INDEX IF NOT EXISTS idx_contracts_data_type ON contracts(data_type);',
+    'CREATE INDEX IF NOT EXISTS idx_contracts_risk ON contracts(risk_score);',
+    'CREATE INDEX IF NOT EXISTS idx_contracts_sector ON contracts(sector);',
+    'CREATE INDEX IF NOT EXISTS idx_contracts_value ON contracts(value_kes);',
+    'CREATE INDEX IF NOT EXISTS idx_contracts_alert ON contracts(alert_status);',
+    'CREATE INDEX IF NOT EXISTS idx_ghost_county ON ghost_projects(county);',
+    'CREATE INDEX IF NOT EXISTS idx_reports_status ON reports(status);',
+    'CREATE INDEX IF NOT EXISTS idx_alerts_type ON alerts(alert_type);',
+    'CREATE INDEX IF NOT EXISTS idx_alerts_severity ON alerts(severity);',
+    'CREATE INDEX IF NOT EXISTS idx_alerts_ack ON alerts(acknowledged);',
+    'CREATE INDEX IF NOT EXISTS idx_eacc_status ON eacc_forwarding(status);',
+    'CREATE INDEX IF NOT EXISTS idx_scan_log_type ON scan_log(scan_type);',
   ];
   for (const sql of indexes) {
     try { await pool.query(sql); }
-    catch (e) { console.warn('[index]', e.message.substring(0, 80)); }
+    catch (e) { /* index may already exist */ }
   }
-  console.log('[schema] Done');
+
+  const addColumns = [
+    "ALTER TABLE contracts ADD COLUMN IF NOT EXISTS completion_date DATE",
+    "ALTER TABLE contracts ADD COLUMN IF NOT EXISTS completion_status TEXT",
+    "ALTER TABLE contracts ADD COLUMN IF NOT EXISTS last_scanned_at TIMESTAMPTZ",
+    "ALTER TABLE contracts ADD COLUMN IF NOT EXISTS alert_status TEXT DEFAULT 'none'",
+    "ALTER TABLE contracts ADD COLUMN IF NOT EXISTS eacc_forwarded BOOLEAN DEFAULT false",
+    "ALTER TABLE contracts ADD COLUMN IF NOT EXISTS eacc_forwarded_at TIMESTAMPTZ",
+    "ALTER TABLE contracts ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW()",
+  ];
+  for (const sql of addColumns) {
+    try { await pool.query(sql); }
+    catch (e) { /* column may already exist */ }
+  }
+
+  console.log('[schema] Done (safe mode)');
 }
 
 async function seed() {
@@ -109,10 +158,12 @@ async function seed() {
   const { scoreContract } = require('../utils/riskEngine');
 
   const existingCount = await pool.query('SELECT COUNT(*) FROM contracts');
-  if (parseInt(existingCount.rows[0].count) > 0) {
-    console.log('[seed] Data already exists, skipping seed');
+  if (parseInt(existingCount.rows[0].count) > 500) {
+    console.log(`[seed] Already have ${existingCount.rows[0].count} contracts, skipping seed`);
     return;
   }
+
+  console.log('[seed] Seeding initial data...');
 
   const sectors = ['Roads', 'Health', 'Education', 'Water & Sanitation', 'Energy', 'ICT', 'Agriculture', 'Infrastructure', 'Transport', 'Environment', 'Housing', 'Public Works', 'Social Services', 'Trade & Industry'];
   const bidTypes = ['open_tender', 'restricted_tender', 'direct_procurement', 'request_for_quotation', 'low_value_procurement', 'single_source'];
@@ -188,6 +239,8 @@ async function seed() {
     'Wajir': ['Habaswein', 'Tarbaj', 'Wajir East', 'Wajir South'],
     'Mandera': ['Elwak', 'Rhamu', 'Lafey', 'Mandera East'],
     'Elgeyo-Marakwet': ['Iten', 'Kabarak', 'Tambach', 'Marakwet East'],
+    'Makueni': ['Wote', 'Makueni', 'Kibwezi', 'Mbooni'],
+    'Kitui': ['Kitui', 'Mwingi', 'Mutomo', 'Tseikuru'],
   };
 
   const titleTemplates = {
@@ -197,11 +250,6 @@ async function seed() {
       'Rehabilitation of {county} Township Roads',
       'Graveling of {county} - {town} Access Road',
       'Construction of Bridge on {county} - {town} Road',
-      'Tarmac Surfacing of {county} - {town} - {town2} Road',
-      'Construction of Speed Calming Features in {county}',
-      'Maintenance of {county} County Roads Network',
-      'Construction of Road along {county} - {town} Corridor',
-      'Upgrading of {county} - {town} - {town2} Road to Bitumen Standard',
     ],
     'Health': [
       'Construction of {county} County Referral Hospital',
@@ -209,11 +257,6 @@ async function seed() {
       'Construction of Maternity Wing at {county} Hospital',
       'Supply of Pharmaceuticals to {county} County Health Department',
       'Construction of Mortuary at {county} County Hospital',
-      'Supply of Ambulances to {county} County Government',
-      'Construction of Laboratory Block at {county} Hospital',
-      'Supply of Medical Gases to {county} Health Facilities',
-      'Construction of Staff Quarters at {county} Hospital',
-      'Renovation of {county} County Health Management Offices',
     ],
     'Education': [
       'Construction of 10 Classrooms at {county} County Primary Schools',
@@ -221,11 +264,6 @@ async function seed() {
       'Construction of Science Laboratories at {county} Secondary Schools',
       'Supply of Furniture to {county} County Schools',
       'Construction of Libraries at {county} County Schools',
-      'Supply of ICT Equipment to {county} County Schools',
-      'Construction of Dormitories at {county} County Boarding Schools',
-      'Supply of Sports Equipment to {county} County Schools',
-      'Construction of Kitchen at {county} County Schools',
-      'Renovation of {county} County Education Board Offices',
     ],
     'Water & Sanitation': [
       'Construction of Water Supply System in {county} County',
@@ -233,11 +271,6 @@ async function seed() {
       'Construction of Water Treatment Plant in {town}, {county}',
       'Supply and Installation of Water Pipes in {county} County',
       'Construction of Sewerage System in {town}, {county}',
-      'Rehabilitation of Water Points in {county} County',
-      'Construction of Dams in {county} County',
-      'Supply of Water Storage Tanks to {county} County',
-      'Construction of Water Kiosks in {town}, {county}',
-      'Lay Advisory of Water Pipelines in {county} County',
     ],
     'Energy': [
       'Construction of Solar Power Plant in {county} County',
@@ -245,11 +278,6 @@ async function seed() {
       'Extension of Power Lines in {county} County',
       'Construction of Mini-Grid in {town}, {county}',
       'Supply and Installation of Street Lights in {town}, {county}',
-      'Installation of Solar Systems in {county} County Offices',
-      'Construction of Wind Power Facility in {county}',
-      'Supply of Generators to {county} County Facilities',
-      'Rural Electrification Program in {county} County',
-      'Construction of Electrical Substation in {town}, {county}',
     ],
     'ICT': [
       'Supply of ICT Equipment to {county} County Government',
@@ -257,11 +285,6 @@ async function seed() {
       'Supply of Computers and Peripherals to {county} Offices',
       'Installation of Fiber Optic Network in {town}, {county}',
       'Construction of Data Center in {county} County',
-      'Supply of Software Licenses to {county} Government',
-      'Installation of CCTV Surveillance System in {town}, {county}',
-      'Supply of Networking Equipment to {county} County',
-      'Digital Literacy Program in {county} County Schools',
-      'Construction of Innovation Hub in {town}, {county}',
     ],
     'Agriculture': [
       'Supply of Agricultural Inputs to {county} County Farmers',
@@ -269,11 +292,6 @@ async function seed() {
       'Supply of Irrigation Equipment in {county} County',
       'Construction of Livestock Market in {town}, {county}',
       'Supply of Seeds and Fertilizer to {county} Farmers',
-      'Construction of Abattoir in {town}, {county}',
-      'Supply of Farm Machinery to {county} County Government',
-      'Construction of Agricultural Extension Office in {county}',
-      'Irrigation Scheme Development in {county} County',
-      'Supply of Fishing Equipment to {county} County Fishermen',
     ],
     'Infrastructure': [
       'Construction of County Headquarters in {town}, {county}',
@@ -281,11 +299,6 @@ async function seed() {
       'Construction of County Stadium in {town}, {county}',
       'Construction of Conference Hall in {town}, {county}',
       'Renovation of {county} County Assembly Building',
-      'Construction of Fire Station in {town}, {county}',
-      'Construction of Public Cemetery in {town}, {county}',
-      'Construction of Public Toilets in {town}, {county}',
-      'Construction of County Boundary Monument in {county}',
-      'Construction of Community Center in {town}, {county}',
     ],
     'Transport': [
       'Supply of Motor Vehicles to {county} County Government',
@@ -293,11 +306,6 @@ async function seed() {
       'Supply of Motorcycles to {county} County Officers',
       'Construction of Bus Park in {town}, {county}',
       'Supply of Uniforms to {county} County Staff',
-      'Maintenance and Service of County Vehicle Fleet',
-      'Supply of Fuel to {county} County Government',
-      'Construction of Taxi Rank in {town}, {county}',
-      'Supply of Bicycles to {county} County Field Officers',
-      'Construction of Weighbridge on {county} Highway',
     ],
     'Environment': [
       'Construction of Waste Management Facility in {town}, {county}',
@@ -305,11 +313,6 @@ async function seed() {
       'Environmental Impact Assessment in {county} County',
       'Construction of Recycling Plant in {town}, {county}',
       'Supply of Tree Seedlings for {county} County Reforestation',
-      'Construction of Compost Site in {town}, {county}',
-      'Environmental Audit of {county} County Projects',
-      'Supply of Protective Gear to {county} Waste Workers',
-      'Tree Planting Campaign in {county} County',
-      'Construction of Sewage Treatment Plant in {town}, {county}',
     ],
     'Housing': [
       'Construction of Affordable Housing Units in {town}, {county}',
@@ -317,11 +320,6 @@ async function seed() {
       'Construction of Government Staff Houses in {county}',
       'Construction of Market Housing Complex in {town}, {county}',
       'Supply of Prefabricated Structures to {county}',
-      'Construction of Residential Flats in {town}, {county}',
-      'Renovation of Government Housing in {county}',
-      'Construction of Estate Access Roads in {town}, {county}',
-      'Supply of Roofing Materials to {county} County',
-      'Construction of Water Harvesting System in {town}, {county}',
     ],
     'Public Works': [
       'Construction of Administration Block in {town}, {county}',
@@ -329,23 +327,13 @@ async function seed() {
       'Renovation of Law Courts in {town}, {county}',
       'Construction of Police Station in {town}, {county}',
       'Supply of Office Equipment to {county} County Government',
-      'Construction of County Library in {town}, {county}',
-      'Renovation of Prison Facilities in {town}, {county}',
-      'Construction of County Archives Building in {county}',
-      'Supply of Printing Services to {county} County',
-      'Construction of Sub-County Office in {town}, {county}',
     ],
     'Social Services': [
       'Construction of Children Home in {town}, {county}',
       'Supply of Relief Food in {county} County',
       'Construction of Disability Resource Center in {town}, {county}',
       'Supply of Assistive Devices in {county} County',
-      'Construction of Senior Citizens Home in {town}, {county}',
-      'Cash Transfer Program for Vulnerable Groups in {county}',
-      'Construction of Youth Empowerment Center in {town}, {county}',
-      'Supply of Support Items to {county} County Orphans',
-      'Construction of Community Social Hall in {town}, {county}',
-      'School Feeding Program in {county} County Primary Schools',
+      'Construction of Senior Citizens Home in {county}',
     ],
     'Trade & Industry': [
       'Construction of Industrial Park in {town}, {county}',
@@ -353,11 +341,6 @@ async function seed() {
       'Construction of Trade Development Center in {town}, {county}',
       'Supply of Office Supplies to {county} County Offices',
       'Construction of Shopping Complex in {town}, {county}',
-      'Supply of Signage and Branding to {county} County',
-      'Construction of Business Incubation Hub in {town}, {county}',
-      'Supply of Printing and Stationery to {county} County',
-      'Construction of Exhibition Center in {town}, {county}',
-      'Supply of Office Stationery to {county} County Departments',
     ],
   };
 
@@ -373,27 +356,20 @@ async function seed() {
     for (let i = 0; i < numContracts; i++) {
       const sector = sectors[id % sectors.length];
       const town = towns[i % towns.length];
-      const town2 = towns[(i + 1) % towns.length];
       const templates = titleTemplates[sector] || titleTemplates['Infrastructure'];
       const template = templates[i % templates.length];
-      const title = template.replace(/\{county\}/g, county.name).replace(/\{town\}/g, town).replace(/\{town2\}/g, town2);
+      const title = template.replace(/\{county\}/g, county.name).replace(/\{town\}/g, town);
 
       const year = years[id % years.length];
       const month = String(1 + (id % 12)).padStart(2, '0');
       const day = String(1 + (id % 28)).padStart(2, '0');
 
       let baseValue;
-      if (sector === 'Roads' || sector === 'Infrastructure') {
-        baseValue = 50000000 + ((id * 137) % 5000000000);
-      } else if (sector === 'Health' || sector === 'Energy') {
-        baseValue = 20000000 + ((id * 251) % 2000000000);
-      } else if (sector === 'ICT') {
-        baseValue = 10000000 + ((id * 79) % 500000000);
-      } else if (sector === 'Agriculture') {
-        baseValue = 5000000 + ((id * 53) % 300000000);
-      } else {
-        baseValue = 3000000 + ((id * 31) % 1000000000);
-      }
+      if (sector === 'Roads' || sector === 'Infrastructure') baseValue = 50000000 + ((id * 137) % 5000000000);
+      else if (sector === 'Health' || sector === 'Energy') baseValue = 20000000 + ((id * 251) % 2000000000);
+      else if (sector === 'ICT') baseValue = 10000000 + ((id * 79) % 500000000);
+      else if (sector === 'Agriculture') baseValue = 5000000 + ((id * 53) % 300000000);
+      else baseValue = 3000000 + ((id * 31) % 1000000000);
 
       const bidType = bidTypes[id % bidTypes.length];
       const status = statuses[id % statuses.length];

@@ -80,12 +80,9 @@ export default function HomePage() {
         {/* Background image */}
         <div className="absolute inset-0">
           <img
-            src="https://images.unsplash.com/photo-1590845077913-1e9e640704e5?w=1920&q=80&auto=format&fit=crop"
+            src="https://images.unsplash.com/photo-1590845077913-1e9e640704e5?w=1920&q=80"
             alt="Nairobi cityscape"
             className="w-full h-full object-cover"
-            onError={(e) => {
-              e.currentTarget.src = "https://images.unsplash.com/photo-1497436072909-60f360e1d4b1?w=1920&q=80"
-            }}
           />
           {/* Cinematic overlay - gradient from dark left to transparent right */}
           <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-900/80 to-slate-900/40" />
@@ -188,9 +185,6 @@ export default function HomePage() {
                       src={feature.image}
                       alt={feature.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      onError={(e) => {
-                        e.currentTarget.src = "https://images.unsplash.com/photo-1450101499163-c8848e968838?w=600&q=75"
-                      }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
                     <div className="absolute bottom-4 left-5 right-5">
@@ -261,9 +255,6 @@ export default function HomePage() {
             src="https://images.unsplash.com/photo-1590845077913-1e9e640704e5?w=1920&q=80"
             alt="Nairobi city"
             className="w-full h-full object-cover"
-            onError={(e) => {
-              e.currentTarget.src = "https://images.unsplash.com/photo-1497436072909-60f360e1d4b1?w=1920&q=80"
-            }}
           />
           <div className="absolute inset-0 bg-slate-950/90" />
         </div>
@@ -344,9 +335,6 @@ export default function HomePage() {
             src="https://images.unsplash.com/photo-1497436072909-60f360e1d4b1?w=1920&q=80"
             alt="Kenya landscape"
             className="w-full h-full object-cover"
-            onError={(e) => {
-              e.currentTarget.src = "https://images.unsplash.com/photo-1590845077913-1e9e640704e5?w=1920&q=80"
-            }}
           />
           <div className="absolute inset-0 bg-slate-950/85" />
         </div>
