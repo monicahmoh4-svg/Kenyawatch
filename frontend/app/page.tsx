@@ -66,6 +66,19 @@ export default function HomePage() {
 
   return (
     <div>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "WebApplication",
+          name: "KenyaWatch AI",
+          url: "https://kenyawatch-chi.vercel.app",
+          description: "AI-powered platform making Kenyan government procurement transparent and accountable through risk detection and citizen reporting.",
+          applicationCategory: "GovernmentApplication",
+          operatingSystem: "Web",
+          offers: { "@type": "Offer", price: "0", priceCurrency: "KES" },
+        })}}
+      />
       {/* Hero Section with KICC Nairobi Background */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         {/* HD KICC Nairobi Background Image */}
@@ -139,7 +152,7 @@ export default function HomePage() {
         </div>
 
         {/* Scroll indicator */}
-        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
+        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce" aria-hidden="true">
           <div className="w-6 h-10 border-2 border-white/50 rounded-full flex justify-center">
             <div className="w-1 h-3 bg-white/50 rounded-full mt-2" />
           </div>
@@ -261,6 +274,49 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* FAQ Section */}
+      <section className="py-20 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <Badge variant="outline" className="mb-4 text-teal-600 border-teal-200">FAQ</Badge>
+            <h2 className="text-4xl font-bold text-slate-900 mb-6">Frequently Asked Questions</h2>
+            <p className="text-xl text-slate-600">
+              Common questions about KenyaWatch and procurement transparency.
+            </p>
+          </div>
+          <div className="max-w-3xl mx-auto space-y-4">
+            {[
+              { q: "What is KenyaWatch?", a: "KenyaWatch is an independent civic-tech platform that aggregates publicly available Kenyan government procurement data from official sources like PPIP and OCDS, and provides AI-powered risk analysis tools to help citizens, journalists, and oversight bodies track public spending." },
+              { q: "Where does the data come from?", a: "Our data comes from the Public Procurement Information Portal (PPIP) at tenders.go.ke, the Open Contracting Data Standard (OCDS) registry, Auditor-General reports, and anonymous citizen submissions. Each record is tagged with its source." },
+              { q: "Is the data accurate?", a: "We display data exactly as published by official sources. We do not modify or fabricate data. Synthetic data used for demonstration is always clearly labeled as 'Reference'. We encourage users to verify information independently." },
+              { q: "Can I report corruption anonymously?", a: "Yes. Our reporting system collects no personal information whatsoever — no IP addresses, no browser fingerprints, no email or phone numbers. For maximum anonymity, use Tor Browser or a VPN." },
+              { q: "How does the AI risk scoring work?", a: "Our risk engine analyzes contracts for red flags including single-source procurement, overpricing compared to market averages, vague scope descriptions, unusually high values, and patterns consistent with bid rigging. Each contract receives a risk score from 0-100." },
+              { q: "Is KenyaWatch affiliated with the government?", a: "No. KenyaWatch is built independently by citizens who believe in transparent governance. We are not affiliated with, endorsed by, or connected to any government agency, political party, or commercial entity." },
+            ].map((faq, i) => (
+              <details key={i} className="group border border-slate-200 rounded-xl overflow-hidden">
+                <summary className="flex items-center justify-between px-6 py-5 cursor-pointer font-semibold text-slate-900 hover:bg-slate-50 transition-colors list-none">
+                  {faq.q}
+                  <span className="ml-4 flex-shrink-0 text-slate-400 group-open:rotate-180 transition-transform">
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                  </span>
+                </summary>
+                <div className="px-6 pb-5 text-slate-600 leading-relaxed">
+                  {faq.a}
+                </div>
+              </details>
+            ))}
+          </div>
+          <div className="text-center mt-10">
+            <Link href="/contact">
+              <Button variant="outline" className="border-teal-200 text-teal-700 hover:bg-teal-50">
+                Have more questions? Contact Us
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-24 bg-slate-900 relative overflow-hidden">
         <div className="absolute inset-0 opacity-20">
@@ -291,6 +347,11 @@ export default function HomePage() {
               </Button>
             </Link>
           </div>
+          <p className="mt-6 text-slate-400 text-sm">
+            <Link href="/about" className="underline hover:text-white transition-colors">Learn more about our mission</Link>
+            {" "}&middot;{" "}
+            <Link href="/contact" className="underline hover:text-white transition-colors">Contact us</Link>
+          </p>
         </div>
       </section>
     </div>

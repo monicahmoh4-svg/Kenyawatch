@@ -114,9 +114,9 @@ export default function ReportPage() {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">County (Optional)</label>
+                  <label htmlFor="county" className="block text-sm font-medium text-slate-700 mb-2">County (Optional)</label>
                   <Select value={form.county || "none"} onValueChange={(v) => setForm({...form, county: v === "none" ? "" : v})}>
-                    <SelectTrigger><SelectValue placeholder="Select county" /></SelectTrigger>
+                    <SelectTrigger id="county"><SelectValue placeholder="Select county" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">Not specified</SelectItem>
                       {ALL_COUNTIES.map(c => (
@@ -126,9 +126,9 @@ export default function ReportPage() {
                   </Select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Category *</label>
+                  <label htmlFor="category" className="block text-sm font-medium text-slate-700 mb-2">Category *</label>
                   <Select value={form.category || "none"} onValueChange={(v) => setForm({...form, category: v === "none" ? "" : v})} required>
-                    <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
+                    <SelectTrigger id="category"><SelectValue placeholder="Select category" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">Select category</SelectItem>
                       {CATEGORIES.map(c => (
@@ -139,8 +139,9 @@ export default function ReportPage() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Summary (20-200 characters) *</label>
+                <label htmlFor="summary" className="block text-sm font-medium text-slate-700 mb-2">Summary (20-200 characters) *</label>
                 <Input
+                  id="summary"
                   value={form.summary}
                   onChange={(e) => setForm({...form, summary: e.target.value})}
                   placeholder="Brief description of the suspected corruption"
@@ -154,8 +155,9 @@ export default function ReportPage() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Details (Optional)</label>
+                <label htmlFor="details" className="block text-sm font-medium text-slate-700 mb-2">Details (Optional)</label>
                 <textarea
+                  id="details"
                   value={form.details}
                   onChange={(e) => setForm({...form, details: e.target.value})}
                   placeholder="Provide specific details such as project names, dates, amounts, and any evidence. DO NOT include your personal information."

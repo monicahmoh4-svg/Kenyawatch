@@ -25,18 +25,18 @@ export function Header() {
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="flex items-center space-x-3 group">
+          <Link href="/" className="flex items-center space-x-3 group" aria-label="KenyaWatch AI - Home">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-teal-600 to-emerald-600 text-white shadow-lg group-hover:shadow-xl transition-shadow">
               <Shield className="h-6 w-6" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-slate-900 group-hover:text-teal-600 transition-colors">KenyaWatch AI</h1>
+              <span className="text-xl font-bold text-slate-900 group-hover:text-teal-600 transition-colors">KenyaWatch AI</span>
               <p className="text-[10px] text-slate-500 tracking-wide uppercase">Procurement Accountability</p>
             </div>
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-1">
+          <nav className="hidden md:flex items-center space-x-1" aria-label="Main navigation">
             {navigation.map((item) => (
               <Link
                 key={item.href}
@@ -68,6 +68,8 @@ export function Header() {
             size="icon"
             className="md:hidden"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-expanded={mobileMenuOpen}
+            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
           >
             {mobileMenuOpen ? (
               <X className="h-6 w-6" />
@@ -79,7 +81,7 @@ export function Header() {
 
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
-          <nav className="md:hidden py-4 border-t space-y-1 bg-white">
+          <nav className="md:hidden py-4 border-t space-y-1 bg-white" aria-label="Mobile navigation">
             {navigation.map((item) => (
               <Link
                 key={item.href}

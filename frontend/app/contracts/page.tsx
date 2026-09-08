@@ -219,7 +219,7 @@ export default function ContractsPage() {
                   onKeyDown={(e) => e.key === 'Enter' && applyFilters()}
                   className="flex-1"
                 />
-                <Button onClick={applyFilters} size="icon" className="bg-teal-600 hover:bg-teal-700">
+                <Button onClick={applyFilters} size="icon" className="bg-teal-600 hover:bg-teal-700" aria-label="Search contracts">
                   <Search className="h-4 w-4" />
                 </Button>
               </div>
@@ -244,14 +244,14 @@ export default function ContractsPage() {
             <table className="w-full text-sm text-left">
               <thead className="bg-gradient-to-r from-slate-50 to-slate-100 text-slate-700 font-semibold border-b">
                 <tr>
-                  <th className="px-4 py-4 whitespace-nowrap">Contract ID</th>
-                  <th className="px-4 py-4">Contract Details</th>
-                  <th className="px-4 py-4 whitespace-nowrap">County</th>
-                  <th className="px-4 py-4 whitespace-nowrap">Sector</th>
-                  <th className="px-4 py-4 text-right whitespace-nowrap">Contract Value</th>
-                  <th className="px-4 py-4">Supplier</th>
-                  <th className="px-4 py-4 text-center whitespace-nowrap">Risk Score</th>
-                  <th className="px-4 py-4 text-center whitespace-nowrap">Action</th>
+                  <th scope="col" className="px-4 py-4 whitespace-nowrap">Contract ID</th>
+                  <th scope="col" className="px-4 py-4">Contract Details</th>
+                  <th scope="col" className="px-4 py-4 whitespace-nowrap">County</th>
+                  <th scope="col" className="px-4 py-4 whitespace-nowrap">Sector</th>
+                  <th scope="col" className="px-4 py-4 text-right whitespace-nowrap">Contract Value</th>
+                  <th scope="col" className="px-4 py-4">Supplier</th>
+                  <th scope="col" className="px-4 py-4 text-center whitespace-nowrap">Risk Score</th>
+                  <th scope="col" className="px-4 py-4 text-center whitespace-nowrap">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -332,6 +332,7 @@ export default function ContractsPage() {
                             size="icon"
                             className="h-8 w-8 text-slate-500 hover:text-teal-600 hover:bg-teal-50"
                             onClick={() => handleViewContract(c)}
+                            aria-label={`View contract ${c.contract_id}`}
                           >
                             <Eye className="h-4 w-4" />
                           </Button>

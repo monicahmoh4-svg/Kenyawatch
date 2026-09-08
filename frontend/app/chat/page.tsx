@@ -171,6 +171,7 @@ export default function ChatPage() {
                   onClick={() => handleSend()}
                   disabled={loading || !input.trim()}
                   className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                  aria-label="Send message"
                 >
                   <Send className="h-4 w-4" />
                 </Button>
