@@ -1,9 +1,8 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Send, Bot, User, AlertCircle, Sparkles, Shield, MessageSquare, RefreshCw } from "lucide-react"
+import { Send, Bot, User, AlertCircle, MessageSquare, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { api } from "@/lib/api"
 import { type ChatMessage } from "@/types"
@@ -51,60 +50,49 @@ export default function ChatPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Hero Header */}
-      <div className="relative bg-gradient-to-r from-purple-900 via-indigo-800 to-blue-900 text-white py-16 mb-8 overflow-hidden">
-        <div className="absolute inset-0 opacity-15" style={{
-          backgroundImage: "url('https://images.unsplash.com/photo-1677442136019-21780ecad995?w=1920&q=80')",
-          backgroundSize: 'cover',
-          backgroundPosition: 'center'
-        }} />
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="max-w-3xl">
-            <div className="flex items-center gap-3 mb-4">
-              <Bot className="h-8 w-8 text-purple-300" />
-              <h1 className="text-4xl font-bold">AI Investigator</h1>
-            </div>
-            <p className="text-lg text-white/90">
-              Ask natural language questions about procurement data and corruption patterns
-            </p>
+      <div className="bg-slate-900 text-white py-12 md:py-16 mb-8">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center gap-3 mb-3">
+            <Bot className="h-6 w-6 text-purple-400" />
+            <h1 className="text-3xl md:text-4xl font-bold">AI Investigator</h1>
           </div>
+          <p className="text-slate-400 max-w-2xl">
+            Ask natural language questions about procurement data and corruption patterns.
+          </p>
         </div>
       </div>
 
       <div className="container mx-auto px-4 max-w-4xl pb-12">
         {/* Info Card */}
-        <Card className="mb-6 bg-blue-50 border-blue-200 shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex items-start gap-3">
-              <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-              <div className="text-sm text-blue-800">
-                <p className="font-semibold mb-1">How it works:</p>
-                <p>I have access to the live procurement database with thousands of contracts across all 47 counties. I always cite data sources and never present synthetic data as fact. Ask me about specific counties, sectors, risk patterns, or corruption indicators.</p>
-              </div>
+        <div className="border border-slate-200 bg-white rounded-lg p-4 mb-6">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="h-4 w-4 text-slate-500 mt-0.5 flex-shrink-0" />
+            <div className="text-sm text-slate-600">
+              I have access to the live procurement database with contracts across all 47 counties. Ask about specific counties, sectors, risk patterns, or corruption indicators.
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Chat Area */}
-        <Card className="mb-6 shadow-lg border-0 overflow-hidden">
-          <CardContent className="p-0">
-            <div className="h-[600px] overflow-y-auto p-6 space-y-4 bg-gradient-to-b from-slate-50 to-white">
-              {messages.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="w-20 h-20 bg-gradient-to-br from-purple-100 to-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Bot className="h-10 w-10 text-purple-600" />
-                  </div>
-                  <h3 className="text-xl font-bold text-slate-800 mb-2">Start a Conversation</h3>
-                  <p className="text-slate-500 mb-8 max-w-md mx-auto">
-                    Ask me anything about procurement data in Kenya. I can help you find high-risk contracts, analyze corruption patterns, and explore documented cases.
-                  </p>
+        <div className="border border-slate-200 bg-white rounded-xl overflow-hidden">
+          <div className="h-[500px] md:h-[600px] overflow-y-auto p-6 space-y-4">
+            {messages.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Bot className="h-6 w-6 text-slate-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-slate-900 mb-2">Start a Conversation</h3>
+                <p className="text-sm text-slate-500 mb-6 max-w-md mx-auto">
+                  Ask anything about procurement data in Kenya. I can find high-risk contracts, analyze patterns, and explore documented cases.
+                </p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-2xl mx-auto">
                     {suggestedQuestions.map((q, i) => (
-                      <button
-                        key={i}
-                        onClick={() => setInput(q)}
-                        className="text-left px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-600 hover:border-purple-300 hover:text-purple-600 hover:bg-purple-50 transition-all shadow-sm"
-                      >
-                        <MessageSquare className="h-4 w-4 inline mr-2 text-slate-400" />
+                  <button
+                    key={i}
+                    onClick={() => setInput(q)}
+                    className="text-left px-4 py-3 bg-white border border-slate-200 rounded-lg text-sm text-slate-600 hover:border-slate-300 hover:text-slate-900 transition-colors"
+                  >
+                    <MessageSquare className="h-3.5 w-3.5 inline mr-2 text-slate-400" />
                         {q}
                       </button>
                     ))}
@@ -113,14 +101,14 @@ export default function ChatPage() {
               ) : messages.map((msg, i) => (
                 <div key={i} className={`flex gap-3 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                   {msg.role === "assistant" && (
-                    <div className="w-8 h-8 bg-gradient-to-br from-purple-100 to-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                      <Bot className="h-5 w-5 text-purple-600" />
+                    <div className="w-7 h-7 bg-slate-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <Bot className="h-4 w-4 text-slate-500" />
                     </div>
                   )}
-                  <div className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+                  <div className={`max-w-[80%] rounded-xl px-4 py-3 ${
                     msg.role === "user"
-                      ? "bg-gradient-to-r from-teal-600 to-emerald-600 text-white"
-                      : "bg-white border border-slate-200 shadow-sm"
+                      ? "bg-teal-600 text-white"
+                      : "bg-white border border-slate-200"
                   }`}>
                     <p className="text-sm whitespace-pre-wrap leading-relaxed">{msg.content}</p>
                     {msg.isError && i === messages.length - 1 && (
@@ -135,22 +123,22 @@ export default function ChatPage() {
                     )}
                   </div>
                   {msg.role === "user" && (
-                    <div className="w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center flex-shrink-0">
-                      <User className="h-5 w-5 text-slate-600" />
+                    <div className="w-7 h-7 bg-slate-200 rounded-full flex items-center justify-center flex-shrink-0">
+                      <User className="h-4 w-4 text-slate-500" />
                     </div>
                   )}
                 </div>
               ))}
               {loading && (
                 <div className="flex gap-3">
-                  <div className="w-8 h-8 bg-gradient-to-br from-purple-100 to-blue-100 rounded-full flex items-center justify-center">
-                    <Bot className="h-5 w-5 text-purple-600" />
+                  <div className="w-7 h-7 bg-slate-100 rounded-full flex items-center justify-center">
+                    <Bot className="h-4 w-4 text-slate-500" />
                   </div>
-                  <div className="bg-white border border-slate-200 rounded-2xl px-4 py-3 shadow-sm">
+                  <div className="bg-white border border-slate-200 rounded-xl px-4 py-3">
                     <div className="flex gap-1 items-center">
-                      <span className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" />
-                      <span className="w-2 h-2 bg-purple-400 rounded-full animate-bounce [animation-delay:0.1s]" />
-                      <span className="w-2 h-2 bg-purple-400 rounded-full animate-bounce [animation-delay:0.2s]" />
+                      <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" />
+                      <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce [animation-delay:0.1s]" />
+                      <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce [animation-delay:0.2s]" />
                     </div>
                   </div>
                 </div>
@@ -170,15 +158,15 @@ export default function ChatPage() {
                 <Button
                   onClick={() => handleSend()}
                   disabled={loading || !input.trim()}
-                  className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                  className="bg-teal-600 hover:bg-teal-700"
                   aria-label="Send message"
                 >
                   <Send className="h-4 w-4" />
                 </Button>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   )

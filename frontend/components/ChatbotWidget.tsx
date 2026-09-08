@@ -99,22 +99,21 @@ export function ChatbotWidget() {
         <button
           onClick={() => setIsOpen(!isOpen)}
           className={cn(
-            "group flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-all duration-300 hover:scale-110",
+            "group flex h-12 w-12 items-center justify-center rounded-full shadow-lg transition-all duration-200",
             isOpen
               ? "bg-slate-700 hover:bg-slate-600"
-              : "bg-gradient-to-br from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 hover:shadow-xl"
+              : "bg-teal-600 hover:bg-teal-500 hover:shadow-xl"
           )}
           aria-label={isOpen ? "Close chat" : "Open chat"}
         >
           {isOpen ? (
-            <X className="h-6 w-6 text-white" />
+            <X className="h-5 w-5 text-white" />
           ) : (
-            <MessageCircle className="h-6 w-6 text-white" />
+            <MessageCircle className="h-5 w-5 text-white" />
           )}
           {!isOpen && (
-            <span className="absolute -top-1 -right-1 flex h-4 w-4">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex h-4 w-4 rounded-full bg-emerald-500" />
+            <span className="absolute -top-1 -right-1 flex h-3 w-3">
+              <span className="relative inline-flex h-3 w-3 rounded-full bg-emerald-500" />
             </span>
           )}
         </button>
@@ -123,29 +122,29 @@ export function ChatbotWidget() {
       {/* Chat Panel */}
       <div
         className={cn(
-          "fixed z-50 transition-all duration-300 ease-in-out",
-          "bottom-24 right-6 w-[380px] h-[520px]",
-          "max-sm:inset-0 max-sm:w-full max-sm:h-full max-sm:bottom-0 max-sm:right-0",
+          "fixed z-50 transition-all duration-200 ease-out",
+          "bottom-20 right-5 w-[360px] h-[500px]",
+          "max-sm:inset-0 max-sm:w-full max-sm:h-full max-sm:bottom-0 max-sm:right-0 max-sm:rounded-none",
           isOpen
             ? "opacity-100 translate-y-0 scale-100 pointer-events-auto"
             : "opacity-0 translate-y-4 scale-95 pointer-events-none"
         )}
       >
-        <div className="flex h-full flex-col rounded-2xl border border-slate-200 bg-white shadow-2xl overflow-hidden">
+        <div className="flex h-full flex-col rounded-xl border border-slate-200 bg-white shadow-xl overflow-hidden">
           {/* Header */}
-          <div className="flex items-center justify-between bg-gradient-to-r from-teal-600 to-emerald-600 px-5 py-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/20">
-                <Sparkles className="h-5 w-5 text-white" />
+          <div className="flex items-center justify-between bg-slate-900 px-4 py-3">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-600">
+                <Sparkles className="h-4 w-4 text-white" />
               </div>
               <div>
                 <h3 className="text-sm font-semibold text-white">KenyaWatch Assistant</h3>
-                <p className="text-[11px] text-emerald-100">AI-powered help</p>
+                <p className="text-[10px] text-slate-400">AI-powered help</p>
               </div>
             </div>
             <button
               onClick={() => setIsOpen(false)}
-              className="flex h-8 w-8 items-center justify-center rounded-full text-white/80 hover:bg-white/20 hover:text-white transition-colors"
+              className="flex h-7 w-7 items-center justify-center rounded-md text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
             >
               <X className="h-4 w-4" />
             </button>

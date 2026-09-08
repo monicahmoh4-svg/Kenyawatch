@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation"
 import { Shield, Menu, X, ExternalLink, Database } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 const navigation = [
   { name: "Dashboard", href: "/" },
@@ -20,35 +20,47 @@ export function Header() {
   const pathname = usePathname()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
+  useEffect(() => {
+    setMobileMenuOpen(false)
+  }, [pathname])
+
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = "hidden"
+    } else {
+      document.body.style.overflow = ""
+    }
+    return () => { document.body.style.overflow = "" }
+  }, [mobileMenuOpen])
+
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 shadow-sm">
+    <header className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
       <div className="container mx-auto px-4">
-        <div className="flex h-16 items-center justify-between">
+        <div className="flex h-14 md:h-16 items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="flex items-center space-x-3 group" aria-label="KenyaWatch AI - Home">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-teal-600 to-emerald-600 text-white shadow-lg group-hover:shadow-xl transition-shadow">
-              <Shield className="h-6 w-6" />
+          <Link href="/" className="flex items-center gap-2.5 group" aria-label="KenyaWatch AI - Home">
+            <div className="flex h-8 w-8 md:h-9 md:w-9 items-center justify-center rounded-lg bg-teal-600 text-white">
+              <Shield className="h-4 w-4 md:h-5 md:w-5" />
             </div>
-            <div>
-              <span className="text-xl font-bold text-slate-900 group-hover:text-teal-600 transition-colors">KenyaWatch AI</span>
-              <p className="text-[10px] text-slate-500 tracking-wide uppercase">Procurement Accountability</p>
+            <div className="flex flex-col">
+              <span className="text-sm md:text-base font-bold text-slate-900 leading-tight">KenyaWatch</span>
+              <span className="text-[9px] md:text-[10px] text-slate-400 tracking-wider uppercase leading-tight">AI Platform</span>
             </div>
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-1" aria-label="Main navigation">
+          <nav className="hidden md:flex items-center gap-0.5" aria-label="Main navigation">
             {navigation.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "px-3 py-2 text-sm font-medium rounded-lg transition-all flex items-center gap-1.5",
+                  "px-3 py-2 text-sm font-medium rounded-md transition-colors",
                   pathname === item.href
-                    ? "bg-teal-50 text-teal-700"
-                    : "text-slate-600 hover:text-teal-600 hover:bg-slate-50"
+                    ? "text-teal-700 bg-teal-50"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
                 )}
               >
-                {item.icon && <item.icon className="h-3.5 w-3.5" />}
                 {item.name}
               </Link>
             ))}
@@ -56,7 +68,7 @@ export function Header() {
               href="https://tenders.go.ke"
               target="_blank"
               rel="noopener noreferrer"
-              className="px-3 py-2 text-sm font-medium text-slate-500 hover:text-teal-600 transition-colors flex items-center gap-1"
+              className="px-3 py-2 text-sm font-medium text-slate-400 hover:text-slate-600 transition-colors flex items-center gap-1 ml-1"
             >
               PPIP <ExternalLink className="h-3 w-3" />
             </a>
@@ -66,40 +78,39 @@ export function Header() {
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden"
+            className="md:hidden h-9 w-9"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-expanded={mobileMenuOpen}
             aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
           >
-            {mobileMenuOpen ? (
-              <X className="h-6 w-6" />
-            ) : (
-              <Menu className="h-6 w-6" />
-            )}
+            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </Button>
         </div>
 
         {/* Mobile Navigation */}
-        {mobileMenuOpen && (
-          <nav className="md:hidden py-4 border-t space-y-1 bg-white" aria-label="Mobile navigation">
+        <div
+          className={cn(
+            "md:hidden overflow-hidden transition-all duration-200 ease-out",
+            mobileMenuOpen ? "max-h-96 opacity-100 pb-4" : "max-h-0 opacity-0"
+          )}
+        >
+          <nav className="border-t border-slate-100 pt-3 space-y-0.5" aria-label="Mobile navigation">
             {navigation.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "block px-4 py-3 text-sm font-medium rounded-lg transition-colors flex items-center gap-2",
+                  "block px-3 py-2.5 text-sm font-medium rounded-md transition-colors",
                   pathname === item.href
-                    ? "bg-teal-600 text-white"
-                    : "text-slate-600 hover:bg-slate-50"
+                    ? "text-teal-700 bg-teal-50"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
                 )}
-                onClick={() => setMobileMenuOpen(false)}
               >
-                {item.icon && <item.icon className="h-4 w-4" />}
                 {item.name}
               </Link>
             ))}
           </nav>
-        )}
+        </div>
       </div>
     </header>
   )

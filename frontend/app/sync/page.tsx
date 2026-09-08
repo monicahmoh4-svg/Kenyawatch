@@ -104,29 +104,24 @@ export default function SyncPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Hero Header */}
-      <div className="relative bg-gradient-to-r from-indigo-900 via-blue-800 to-teal-800 text-white py-16 mb-8 overflow-hidden">
-        <div className="absolute inset-0 opacity-10" style={{
-          backgroundImage: "url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1920&q=80')",
-          backgroundSize: 'cover',
-          backgroundPosition: 'center'
-        }} />
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="flex items-center gap-3 mb-4">
-            <Database className="h-8 w-8 text-blue-300" />
-            <h1 className="text-4xl font-bold">Data Sync & Browser</h1>
+      <div className="bg-slate-900 text-white py-12 md:py-16 mb-8">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center gap-3 mb-3">
+            <Database className="h-6 w-6 text-blue-400" />
+            <h1 className="text-3xl md:text-4xl font-bold">Data Sync & Browser</h1>
           </div>
-          <p className="text-lg text-white/90">
-            Browse all contracts and sync new data from PPIP (Public Procurement Information Portal)
+          <p className="text-slate-400 max-w-2xl">
+            Browse all contracts and sync new data from the Public Procurement Information Portal.
           </p>
         </div>
       </div>
 
-      <div className="container mx-auto px-4 pb-12 space-y-8">
+      <div className="container mx-auto px-4 pb-12 space-y-6">
         {/* Sync Controls */}
-        <Card className="shadow-lg border-0">
-          <CardContent className="p-6">
+        <div className="border border-slate-200 bg-white rounded-xl">
+          <div className="p-5">
             <div className="flex items-center gap-2 mb-4">
-              <RefreshCw className="h-5 w-5 text-blue-600" />
+              <RefreshCw className="h-4 w-4 text-slate-500" />
               <h2 className="text-lg font-semibold text-slate-800">Sync from PPIP</h2>
             </div>
             <p className="text-sm text-slate-600 mb-4">
@@ -194,14 +189,14 @@ export default function SyncPage() {
                 )}
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Contract Browser with Filters */}
-        <Card className="shadow-lg border-0">
-          <CardContent className="p-6">
+        <div className="border border-slate-200 bg-white rounded-xl">
+          <div className="p-5">
             <div className="flex items-center gap-2 mb-4">
-              <Search className="h-5 w-5 text-blue-600" />
+              <Search className="h-4 w-4 text-slate-500" />
               <h2 className="text-lg font-semibold text-slate-800">Browse Contracts</h2>
               <Badge variant="outline" className="ml-auto">{total.toLocaleString()} total</Badge>
             </div>
@@ -316,12 +311,12 @@ export default function SyncPage() {
                 </Button>
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Sync History */}
-        <Card className="shadow-lg border-0">
-          <CardContent className="p-6">
+        <div className="border border-slate-200 bg-white rounded-xl">
+          <div className="p-5">
             <h2 className="text-lg font-semibold text-slate-800 mb-4">Sync History</h2>
             {loading ? (
               <div className="text-center py-8 text-slate-500">Loading...</div>
@@ -357,8 +352,8 @@ export default function SyncPage() {
                 </table>
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   )

@@ -2,13 +2,12 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { Shield, FileText, MapPin, MessageSquare, ArrowRight, AlertTriangle, TrendingUp, Users, Building2, Globe, Eye, RefreshCw, Loader2 } from "lucide-react"
+import { Shield, FileText, MapPin, MessageSquare, ArrowRight, AlertTriangle, Eye, Users, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { statsApi } from "@/lib/api"
 import { type DashboardStats } from "@/types"
-import { formatCurrency } from "@/lib/utils"
 
 export default function HomePage() {
   const [stats, setStats] = useState<DashboardStats | null>(null)
@@ -22,177 +21,139 @@ export default function HomePage() {
     {
       icon: FileText,
       title: "Procurement Database",
-      description: "Search and filter contracts across all 47 counties with AI-powered risk scoring. Access detailed contract information including values, suppliers, and completion status.",
+      description: "Search and filter contracts across all 47 counties. Each contract is scored for corruption risk using our AI engine.",
       href: "/contracts",
-      color: "from-blue-500 to-blue-600",
       stat: stats?.total || 0,
-      statLabel: "Contracts Tracked"
+      statLabel: "contracts tracked",
     },
     {
       icon: MapPin,
       title: "Ghost Project Detection",
-      description: "Identify infrastructure projects that were funded by public money but never built or were abandoned. Real documented cases with evidence.",
+      description: "Infrastructure projects funded by public money but never built. Real documented cases with evidence and source citations.",
       href: "/ghost-projects",
-      color: "from-red-500 to-red-600",
       stat: "10+",
-      statLabel: "Ghost Projects"
+      statLabel: "ghost projects",
     },
     {
       icon: Shield,
       title: "Anonymous Reporting",
-      description: "Safely report suspected procurement corruption with end-to-end anonymity. Your identity is never collected or stored.",
+      description: "Report suspected procurement corruption with complete anonymity. No personal data is collected or stored.",
       href: "/report",
-      color: "from-green-500 to-green-600",
       stat: stats?.reports_total || 0,
-      statLabel: "Reports Filed"
+      statLabel: "reports filed",
     },
     {
       icon: MessageSquare,
       title: "AI Investigator",
-      description: "Ask natural language questions about procurement data. Our AI assistant analyzes patterns and provides insights on corruption indicators.",
+      description: "Ask natural language questions about procurement data. Our AI analyzes patterns and surfaces corruption indicators.",
       href: "/chat",
-      color: "from-purple-500 to-purple-600",
       stat: "24/7",
-      statLabel: "Available"
+      statLabel: "available",
     },
   ]
 
-  const statsCards = [
-    { label: "Total Contracts", value: stats?.total || 0, icon: FileText, color: "text-blue-600 bg-blue-50" },
-    { label: "Documented Cases", value: stats?.documented || 0, icon: Eye, color: "text-green-600 bg-green-50" },
-    { label: "High Risk Items", value: stats?.critical || 0, icon: AlertTriangle, color: "text-red-600 bg-red-50" },
-    { label: "Citizen Reports", value: stats?.reports_total || 0, icon: Users, color: "text-purple-600 bg-purple-50" },
+  const statsDisplay = [
+    { label: "Total Contracts", value: stats?.total || 0, icon: FileText },
+    { label: "Documented Cases", value: stats?.documented || 0, icon: Eye },
+    { label: "High Risk Items", value: stats?.critical || 0, icon: AlertTriangle },
+    { label: "Citizen Reports", value: stats?.reports_total || 0, icon: Users },
   ]
 
   return (
     <div>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "WebApplication",
-          name: "KenyaWatch AI",
-          url: "https://kenyawatch-chi.vercel.app",
-          description: "AI-powered platform making Kenyan government procurement transparent and accountable through risk detection and citizen reporting.",
-          applicationCategory: "GovernmentApplication",
-          operatingSystem: "Web",
-          offers: { "@type": "Offer", price: "0", priceCurrency: "KES" },
-        })}}
-      />
-      {/* Hero Section with KICC Nairobi Background */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        {/* HD KICC Nairobi Background Image */}
+      {/* Hero Section */}
+      <section className="relative min-h-[85vh] md:min-h-screen flex items-center overflow-hidden bg-slate-900">
+        {/* Background image with proper overlay */}
         <div
-          className="absolute inset-0 bg-cover bg-center bg-fixed"
+          className="absolute inset-0 bg-cover bg-center"
           style={{
-            backgroundImage: "url('https://images.pexels.com/photos/35238178/pexels-photo-35238178.jpeg?auto=compress&cs=tinysrgb&w=1920')",
+            backgroundImage: "url('https://images.unsplash.com/photo-1590845077913-1e9e640704e5?w=1920&q=80')",
           }}
         >
-          <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-slate-900/75 to-teal-900/70" />
+          <div className="absolute inset-0 bg-slate-900/80" />
         </div>
 
-        {/* Animated gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-r from-teal-600/15 via-transparent to-blue-600/15 animate-pulse-slow" />
+        <div className="relative z-10 container mx-auto px-4 py-20 md:py-0">
+          <div className="max-w-3xl">
+            <Badge variant="outline" className="mb-6 text-teal-300 border-teal-700 bg-teal-900/30 text-xs tracking-wider uppercase">
+              Open Data Platform
+            </Badge>
 
-        {/* Content */}
-        <div className="relative z-10 container mx-auto px-4 text-center">
-          <div className="max-w-5xl mx-auto space-y-8 animate-fade-in">
-            {/* Badge */}
-            <div className="inline-flex items-center space-x-2 bg-white/10 backdrop-blur-md border border-white/30 rounded-full px-6 py-3 shadow-2xl">
-              <Shield className="h-5 w-5 text-teal-400" />
-              <span className="text-sm font-medium text-white">Civic-Tech for Transparency & Accountability</span>
-            </div>
-
-            {/* Main Heading */}
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-tight tracking-tight">
-              Fighting Procurement<br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 via-cyan-400 to-blue-400">
-                Corruption in Kenya
-              </span>
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white leading-[1.1] tracking-tight mb-6">
+              Making Kenyan Public
+              <br />
+              <span className="text-teal-400">Procurement Transparent</span>
             </h1>
 
-            {/* Subtitle */}
-            <p className="text-xl md:text-2xl text-slate-200 max-w-3xl mx-auto leading-relaxed">
-              AI-powered platform making government procurement transparent,
-              accountable, and accessible to every Kenyan citizen.
+            <p className="text-lg md:text-xl text-slate-300 max-w-2xl leading-relaxed mb-8">
+              Track government contracts across all 47 counties. AI-powered risk
+              detection. Open data. Built for accountability.
             </p>
 
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-6">
+            <div className="flex flex-col sm:flex-row items-start gap-3">
               <Link href="/contracts">
-                <Button size="lg" className="bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-500 hover:to-teal-400 text-white px-10 py-6 text-lg shadow-xl hover:shadow-2xl transition-all">
+                <Button size="lg" className="bg-teal-600 hover:bg-teal-500 text-white px-8 py-5 text-base font-medium shadow-lg shadow-teal-900/30 transition-colors">
                   Explore Contracts
-                  <ArrowRight className="ml-2 h-5 w-5" />
+                  <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
               <Link href="/report">
-                <Button size="lg" variant="outline" className="border-2 border-white/50 text-white hover:bg-white/10 px-10 py-6 text-lg backdrop-blur-sm">
+                <Button size="lg" variant="outline" className="border-slate-600 text-white hover:bg-slate-800 px-8 py-5 text-base font-medium transition-colors">
                   Report Corruption
                 </Button>
               </Link>
             </div>
 
-            {/* Live Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-16 max-w-4xl mx-auto">
-              {statsCards.map((stat, i) => (
-                <Card key={i} className="bg-white/10 backdrop-blur-md border-white/20 text-white shadow-xl hover:bg-white/15 transition-all">
-                  <CardContent className="p-6 text-center">
-                    <div className={`w-10 h-10 rounded-full ${stat.color} flex items-center justify-center mx-auto mb-3`}>
-                      <stat.icon className="h-5 w-5" />
-                    </div>
-                    <div className="text-3xl font-bold text-white mb-1">
-                      {loading ? "—" : stat.value.toLocaleString()}
-                    </div>
-                    <div className="text-xs text-slate-300">{stat.label}</div>
-                  </CardContent>
-                </Card>
+            {/* Stats row */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-16 pt-8 border-t border-slate-700/50">
+              {statsDisplay.map((stat, i) => (
+                <div key={i}>
+                  <div className="text-2xl md:text-3xl font-bold text-white mb-1">
+                    {loading ? <span className="inline-block w-12 h-6 skeleton" /> : stat.value.toLocaleString()}
+                  </div>
+                  <div className="text-sm text-slate-400">{stat.label}</div>
+                </div>
               ))}
             </div>
-          </div>
-        </div>
-
-        {/* Scroll indicator */}
-        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce" aria-hidden="true">
-          <div className="w-6 h-10 border-2 border-white/50 rounded-full flex justify-center">
-            <div className="w-1 h-3 bg-white/50 rounded-full mt-2" />
           </div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section className="py-24 bg-gradient-to-b from-slate-50 to-white">
+      <section className="py-20 md:py-28 bg-white">
         <div className="container mx-auto px-4">
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <Badge variant="outline" className="mb-4 text-teal-600 border-teal-200">Platform Features</Badge>
-            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6">
-              Tools for Accountability
+          <div className="max-w-2xl mb-14">
+            <p className="text-sm font-semibold text-teal-600 tracking-wider uppercase mb-3">What we do</p>
+            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
+              Tools for procurement accountability
             </h2>
-            <p className="text-xl text-slate-600 leading-relaxed">
-              Comprehensive platform empowering citizens, journalists, and oversight
-              bodies to track public procurement and expose corruption.
+            <p className="text-lg text-slate-600">
+              Empowering citizens, journalists, and oversight bodies to track public spending and expose corruption.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-5 max-w-6xl">
             {features.map((feature, i) => (
-              <Link key={i} href={feature.href}>
-                <Card className="group hover:shadow-2xl transition-all duration-500 border-2 hover:border-teal-300 overflow-hidden h-full">
-                  <CardContent className="p-10">
-                    <div className={`bg-gradient-to-br ${feature.color} w-16 h-16 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg`}>
-                      <feature.icon className="h-8 w-8 text-white" />
-                    </div>
-                    <h3 className="text-2xl font-bold text-slate-900 mb-3 group-hover:text-teal-600 transition-colors">
-                      {feature.title}
-                    </h3>
-                    <p className="text-slate-600 mb-6 leading-relaxed">
-                      {feature.description}
-                    </p>
-                    <div className="flex items-center justify-between pt-4 border-t">
-                      <div>
-                        <div className="text-3xl font-bold text-teal-600">{typeof feature.stat === 'number' ? feature.stat.toLocaleString() : feature.stat}</div>
-                        <div className="text-sm text-slate-500">{feature.statLabel}</div>
+              <Link key={i} href={feature.href} className="group">
+                <Card className="h-full border border-slate-200 hover:border-slate-300 transition-colors">
+                  <CardContent className="p-7 md:p-8">
+                    <div className="flex items-start gap-4 mb-5">
+                      <div className="w-11 h-11 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0 group-hover:bg-teal-50 transition-colors">
+                        <feature.icon className="h-5 w-5 text-slate-700 group-hover:text-teal-600 transition-colors" />
                       </div>
-                      <ArrowRight className="h-5 w-5 text-slate-400 group-hover:text-teal-600 group-hover:translate-x-2 transition-all" />
+                      <div>
+                        <h3 className="text-lg font-semibold text-slate-900 mb-1">{feature.title}</h3>
+                        <p className="text-sm text-slate-500 leading-relaxed">{feature.description}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-2xl font-bold text-slate-900">
+                          {typeof feature.stat === 'number' ? feature.stat.toLocaleString() : feature.stat}
+                        </span>
+                        <span className="text-sm text-slate-400">{feature.statLabel}</span>
+                      </div>
+                      <ArrowRight className="h-4 w-4 text-slate-400 group-hover:text-teal-600 group-hover:translate-x-1 transition-all" />
                     </div>
                   </CardContent>
                 </Card>
@@ -202,115 +163,98 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* How It Works Section */}
-      <section className="py-20 bg-white">
+      {/* How It Works */}
+      <section className="py-20 md:py-28 bg-slate-50">
         <div className="container mx-auto px-4">
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <Badge variant="outline" className="mb-4 text-teal-600 border-teal-200">How It Works</Badge>
-            <h2 className="text-4xl font-bold text-slate-900 mb-6">Transparent by Design</h2>
+          <div className="max-w-2xl mb-14">
+            <p className="text-sm font-semibold text-teal-600 tracking-wider uppercase mb-3">How it works</p>
+            <h2 className="text-3xl md:text-4xl font-bold text-slate-900">
+              Three steps to transparency
+            </h2>
           </div>
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+
+          <div className="grid md:grid-cols-3 gap-8 max-w-5xl">
             {[
-              { step: "01", title: "Data Collection", desc: "We aggregate data from PPIP (tenders.go.ke), OCDS feeds, Auditor-General reports, and citizen submissions across all 47 counties." },
-              { step: "02", title: "AI Risk Analysis", desc: "Every contract is scored using our risk engine that detects bid rigging, overpricing, single-source procurement, and ghost projects." },
-              { step: "03", title: "Public Access", desc: "All data is freely accessible with source badges so you can verify every claim independently. Sort by county, sector, year, or risk level." },
+              { step: "01", title: "Collect", desc: "We aggregate procurement data from PPIP, OCDS feeds, Auditor-General reports, and citizen submissions across all 47 counties." },
+              { step: "02", title: "Analyze", desc: "Every contract is scored for risk — detecting bid rigging, overpricing, single-source abuse, and ghost projects." },
+              { step: "03", title: "Publish", desc: "All data is freely accessible with source badges. Sort by county, sector, year, or risk level. Verify every claim independently." },
             ].map((item, i) => (
-              <div key={i} className="text-center p-8 rounded-2xl bg-slate-50 hover:bg-teal-50 transition-colors">
-                <div className="text-5xl font-bold text-teal-200 mb-4">{item.step}</div>
-                <h3 className="text-xl font-bold text-slate-900 mb-3">{item.title}</h3>
-                <p className="text-slate-600">{item.desc}</p>
+              <div key={i} className="relative">
+                <div className="text-6xl font-bold text-slate-100 mb-4">{item.step}</div>
+                <h3 className="text-xl font-semibold text-slate-900 mb-2">{item.title}</h3>
+                <p className="text-slate-600 leading-relaxed">{item.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Data Integrity Notice */}
-      <section className="py-20 bg-gradient-to-r from-teal-900 via-teal-800 to-slate-900 text-white relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute inset-0" style={{
-            backgroundImage: "url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1920&q=80')",
-            backgroundSize: 'cover',
-            backgroundPosition: 'center'
-          }} />
-        </div>
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="max-w-4xl mx-auto text-center space-y-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-yellow-500/20 rounded-full mb-4">
-              <AlertTriangle className="h-8 w-8 text-yellow-400" />
+      {/* Data Integrity */}
+      <section className="py-20 md:py-28 bg-slate-900 text-white">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto text-center">
+            <div className="inline-flex items-center justify-center w-12 h-12 bg-amber-500/10 rounded-xl mb-6">
+              <AlertTriangle className="h-6 w-6 text-amber-400" />
             </div>
-            <h2 className="text-4xl font-bold">Data Integrity First</h2>
-            <p className="text-xl text-slate-300 leading-relaxed">
-              Every record on KenyaWatch carries a transparency badge showing its source.
-              We never present synthetic data as fact — trust is earned through verifiable evidence.
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Data integrity first</h2>
+            <p className="text-lg text-slate-400 mb-10 max-w-2xl mx-auto">
+              Every record carries a transparency badge showing its source.
+              We never present synthetic data as fact.
             </p>
-            <div className="flex flex-wrap justify-center gap-4 pt-6">
-              <Badge variant="documented" className="text-sm px-6 py-3 border-2">
-                <span className="flex items-center gap-2">
-                  <span className="w-2 h-2 bg-green-500 rounded-full" />
-                  Documented - Source-cited
-                </span>
-              </Badge>
-              <Badge variant="live_sync" className="text-sm px-6 py-3 border-2">
-                <span className="flex items-center gap-2">
-                  <span className="w-2 h-2 bg-blue-500 rounded-full" />
-                  Live Sync - PPIP/OCDS Feed
-                </span>
-              </Badge>
-              <Badge variant="manual_scan" className="text-sm px-6 py-3 border-2">
-                <span className="flex items-center gap-2">
-                  <span className="w-2 h-2 bg-yellow-500 rounded-full" />
-                  Manual Scan - User Submitted
-                </span>
-              </Badge>
-              <Badge variant="reference" className="text-sm px-6 py-3 border-2">
-                <span className="flex items-center gap-2">
-                  <span className="w-2 h-2 bg-red-500 rounded-full" />
-                  Reference - Synthetic Data
-                </span>
-              </Badge>
+            <div className="flex flex-wrap justify-center gap-3">
+              {[
+                { label: "Documented", desc: "Source-cited", color: "bg-green-500" },
+                { label: "Live Sync", desc: "PPIP/OCDS Feed", color: "bg-blue-500" },
+                { label: "Manual Scan", desc: "User Submitted", color: "bg-amber-500" },
+                { label: "Reference", desc: "Synthetic Data", color: "bg-slate-500" },
+              ].map((item, i) => (
+                <div key={i} className="flex items-center gap-3 bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5">
+                  <span className={`w-2 h-2 rounded-full ${item.color} flex-shrink-0`} />
+                  <div className="text-left">
+                    <div className="text-sm font-medium text-white">{item.label}</div>
+                    <div className="text-xs text-slate-500">{item.desc}</div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
       </section>
 
-      {/* FAQ Section */}
-      <section className="py-20 bg-white">
+      {/* FAQ */}
+      <section className="py-20 md:py-28 bg-white">
         <div className="container mx-auto px-4">
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <Badge variant="outline" className="mb-4 text-teal-600 border-teal-200">FAQ</Badge>
-            <h2 className="text-4xl font-bold text-slate-900 mb-6">Frequently Asked Questions</h2>
-            <p className="text-xl text-slate-600">
-              Common questions about KenyaWatch and procurement transparency.
-            </p>
+          <div className="max-w-2xl mb-14">
+            <p className="text-sm font-semibold text-teal-600 tracking-wider uppercase mb-3">FAQ</p>
+            <h2 className="text-3xl md:text-4xl font-bold text-slate-900">
+              Common questions
+            </h2>
           </div>
-          <div className="max-w-3xl mx-auto space-y-4">
+          <div className="max-w-3xl space-y-3">
             {[
               { q: "What is KenyaWatch?", a: "KenyaWatch is an independent civic-tech platform that aggregates publicly available Kenyan government procurement data from official sources like PPIP and OCDS, and provides AI-powered risk analysis tools to help citizens, journalists, and oversight bodies track public spending." },
               { q: "Where does the data come from?", a: "Our data comes from the Public Procurement Information Portal (PPIP) at tenders.go.ke, the Open Contracting Data Standard (OCDS) registry, Auditor-General reports, and anonymous citizen submissions. Each record is tagged with its source." },
               { q: "Is the data accurate?", a: "We display data exactly as published by official sources. We do not modify or fabricate data. Synthetic data used for demonstration is always clearly labeled as 'Reference'. We encourage users to verify information independently." },
               { q: "Can I report corruption anonymously?", a: "Yes. Our reporting system collects no personal information whatsoever — no IP addresses, no browser fingerprints, no email or phone numbers. For maximum anonymity, use Tor Browser or a VPN." },
-              { q: "How does the AI risk scoring work?", a: "Our risk engine analyzes contracts for red flags including single-source procurement, overpricing compared to market averages, vague scope descriptions, unusually high values, and patterns consistent with bid rigging. Each contract receives a risk score from 0-100." },
+              { q: "How does the AI risk scoring work?", a: "Our risk engine analyzes contracts for red flags including single-source procurement, overpricing, vague scope descriptions, unusually high values, and patterns consistent with bid rigging. Each contract receives a risk score from 0-100." },
               { q: "Is KenyaWatch affiliated with the government?", a: "No. KenyaWatch is built independently by citizens who believe in transparent governance. We are not affiliated with, endorsed by, or connected to any government agency, political party, or commercial entity." },
             ].map((faq, i) => (
-              <details key={i} className="group border border-slate-200 rounded-xl overflow-hidden">
-                <summary className="flex items-center justify-between px-6 py-5 cursor-pointer font-semibold text-slate-900 hover:bg-slate-50 transition-colors list-none">
+              <details key={i} className="group border border-slate-200 rounded-lg">
+                <summary className="flex items-center justify-between px-6 py-4 cursor-pointer font-medium text-slate-900 hover:bg-slate-50 transition-colors [&::-webkit-details-marker]:hidden list-none">
                   {faq.q}
-                  <span className="ml-4 flex-shrink-0 text-slate-400 group-open:rotate-180 transition-transform">
-                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
-                  </span>
+                  <ChevronDown className="h-4 w-4 text-slate-400 group-open:rotate-180 transition-transform flex-shrink-0 ml-4" />
                 </summary>
-                <div className="px-6 pb-5 text-slate-600 leading-relaxed">
+                <div className="px-6 pb-4 text-slate-600 text-sm leading-relaxed border-t border-slate-100 pt-4">
                   {faq.a}
                 </div>
               </details>
             ))}
           </div>
-          <div className="text-center mt-10">
+          <div className="mt-8">
             <Link href="/contact">
-              <Button variant="outline" className="border-teal-200 text-teal-700 hover:bg-teal-50">
-                Have more questions? Contact Us
-                <ArrowRight className="ml-2 h-4 w-4" />
+              <Button variant="ghost" className="text-teal-600 hover:text-teal-700 hover:bg-teal-50 px-0">
+                Have more questions? Contact us
+                <ArrowRight className="ml-1.5 h-4 w-4" />
               </Button>
             </Link>
           </div>
@@ -318,39 +262,31 @@ export default function HomePage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-24 bg-slate-900 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute inset-0" style={{
-            backgroundImage: "url('https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=1920&q=80')",
-            backgroundSize: 'cover',
-            backgroundPosition: 'center'
-          }} />
-        </div>
-        <div className="container mx-auto px-4 relative z-10 text-center">
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-            Ready to Hold Government Accountable?
+      <section className="py-20 md:py-28 bg-slate-50 border-t border-slate-200">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
+            Ready to hold government accountable?
           </h2>
-          <p className="text-xl text-slate-300 mb-10 max-w-2xl mx-auto leading-relaxed">
-            Join thousands of Kenyans using data to fight corruption and demand
-            transparency in public procurement.
+          <p className="text-lg text-slate-600 mb-8 max-w-xl mx-auto">
+            Join thousands of Kenyans using data to fight corruption and demand transparency.
           </p>
-          <div className="flex flex-col sm:flex-row justify-center gap-4">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link href="/contracts">
-              <Button size="lg" className="bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-500 hover:to-teal-400 text-white px-10 py-6 text-lg shadow-xl">
+              <Button size="lg" className="bg-teal-600 hover:bg-teal-500 text-white px-8 py-5 text-base font-medium shadow-sm transition-colors">
                 Browse Contracts
-                <ArrowRight className="ml-2 h-5 w-5" />
+                <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
             <Link href="/report">
-              <Button size="lg" variant="outline" className="border-2 border-white text-white hover:bg-white/10 px-10 py-6 text-lg">
+              <Button size="lg" variant="outline" className="border-slate-300 text-slate-700 hover:bg-white px-8 py-5 text-base font-medium transition-colors">
                 Submit a Report
               </Button>
             </Link>
           </div>
-          <p className="mt-6 text-slate-400 text-sm">
-            <Link href="/about" className="underline hover:text-white transition-colors">Learn more about our mission</Link>
+          <p className="mt-6 text-sm text-slate-500">
+            <Link href="/about" className="text-slate-600 hover:text-teal-600 transition-colors underline underline-offset-2">Learn more about our mission</Link>
             {" "}&middot;{" "}
-            <Link href="/contact" className="underline hover:text-white transition-colors">Contact us</Link>
+            <Link href="/contact" className="text-slate-600 hover:text-teal-600 transition-colors underline underline-offset-2">Contact us</Link>
           </p>
         </div>
       </section>
