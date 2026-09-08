@@ -49,8 +49,16 @@ export default function ChatPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <div className="bg-slate-900 text-white py-12 md:py-16 mb-8">
-        <div className="container mx-auto px-4">
+      <section className="relative py-12 md:py-16 mb-8 overflow-hidden">
+        <div className="absolute inset-0">
+          <img
+            src="https://images.unsplash.com/photo-1677442136019-21780ecad995?w=1920&q=80"
+            alt="AI technology"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-slate-950/90" />
+        </div>
+        <div className="relative z-10 container mx-auto px-6">
           <div className="flex items-center gap-3 mb-3">
             <Bot className="h-6 w-6 text-teal-400" />
             <h1 className="text-3xl md:text-4xl font-bold">AI Investigator</h1>
@@ -59,9 +67,9 @@ export default function ChatPage() {
             Ask natural language questions about procurement data and corruption patterns.
           </p>
         </div>
-      </div>
+      </section>
 
-      <div className="container mx-auto px-4 max-w-4xl pb-12">
+      <div className="container mx-auto px-6 max-w-4xl pb-12">
         <div className="border border-slate-200 bg-white rounded-lg p-4 mb-6">
           <div className="flex items-start gap-3">
             <AlertCircle className="h-4 w-4 text-slate-500 mt-0.5 flex-shrink-0" />

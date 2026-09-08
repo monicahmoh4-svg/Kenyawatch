@@ -23,7 +23,7 @@ const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
   'disputed': { label: 'Disputed', className: 'bg-red-50 text-red-700 border-red-200' },
   'abandoned': { label: 'Abandoned', className: 'bg-orange-50 text-orange-700 border-orange-200' },
   'suspicious': { label: 'Suspicious', className: 'bg-amber-50 text-amber-700 border-amber-200' },
-  'ghost': { label: 'Ghost Project', className: 'bg-purple-50 text-purple-700 border-purple-200' },
+  'ghost': { label: 'Ghost Project', className: 'bg-teal-50 text-teal-700 border-teal-200' },
 }
 
 export default function GhostProjectsPage() {
@@ -37,8 +37,16 @@ export default function GhostProjectsPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Hero */}
-      <div className="bg-slate-900 text-white py-12 md:py-16 mb-8">
-        <div className="container mx-auto px-4">
+      <section className="relative py-12 md:py-16 mb-8 overflow-hidden">
+        <div className="absolute inset-0">
+          <img
+            src="https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=1920&q=80"
+            alt="Abandoned construction"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-slate-950/90" />
+        </div>
+        <div className="relative z-10 container mx-auto px-6">
           <div className="flex items-center gap-3 mb-3">
             <AlertTriangle className="h-6 w-6 text-amber-400" />
             <h1 className="text-3xl md:text-4xl font-bold">Ghost Projects</h1>
@@ -52,16 +60,16 @@ export default function GhostProjectsPage() {
             </p>
           </div>
         </div>
-      </div>
+      </section>
 
-      <div className="container mx-auto px-4 pb-12">
+      <div className="container mx-auto px-6 pb-12">
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {[
             { label: "Ghost Projects", value: projects.length, color: "text-red-600" },
             { label: "Abandoned", value: projects.filter(p => p.claimed_status === 'abandoned').length, color: "text-orange-600" },
             { label: "Suspicious", value: projects.filter(p => p.claimed_status === 'suspicious').length, color: "text-amber-600" },
-            { label: "Disputed", value: projects.filter(p => p.claimed_status === 'disputed').length, color: "text-purple-600" },
+            { label: "Disputed", value: projects.filter(p => p.claimed_status === 'disputed').length, color: "text-red-600" },
           ].map((stat, i) => (
             <div key={i} className="border border-slate-200 rounded-lg bg-white p-4 text-center">
               <div className={`text-2xl font-bold ${stat.color} mb-1`}>

@@ -88,8 +88,16 @@ export default function ContractsPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Hero Header */}
-      <div className="bg-slate-900 text-white py-12 md:py-16 mb-8">
-        <div className="container mx-auto px-4">
+      <section className="relative py-12 md:py-16 mb-8 overflow-hidden">
+        <div className="absolute inset-0">
+          <img
+            src="https://images.unsplash.com/photo-1450101499163-c8848e968838?w=1920&q=80"
+            alt="Government contracts"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-slate-950/90" />
+        </div>
+        <div className="relative z-10 container mx-auto px-6">
           <div className="flex items-center gap-3 mb-3">
             <FileText className="h-6 w-6 text-teal-400" />
             <h1 className="text-3xl md:text-4xl font-bold">Procurement Database</h1>
@@ -113,9 +121,9 @@ export default function ContractsPage() {
             ))}
           </div>
         </div>
-      </div>
+      </section>
 
-      <div className="container mx-auto px-4 pb-12">
+      <div className="container mx-auto px-6 pb-12">
         {/* Filters */}
         <Card className="mb-6 border border-slate-200">
           <CardContent className="p-5">

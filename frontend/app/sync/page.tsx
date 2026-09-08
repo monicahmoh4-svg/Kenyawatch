@@ -1,9 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { RefreshCw, Database, Filter, CheckCircle, AlertTriangle, Loader2, Search, Download, ArrowUpDown } from "lucide-react"
+import { RefreshCw, Database, Filter, CheckCircle, AlertTriangle, Loader2, Search, ArrowUpDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
@@ -104,8 +103,16 @@ export default function SyncPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Hero Header */}
-      <div className="bg-slate-900 text-white py-12 md:py-16 mb-8">
-        <div className="container mx-auto px-4">
+      <section className="relative py-12 md:py-16 mb-8 overflow-hidden">
+        <div className="absolute inset-0">
+          <img
+            src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1920&q=80"
+            alt="Data synchronization"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-slate-950/90" />
+        </div>
+        <div className="relative z-10 container mx-auto px-6">
           <div className="flex items-center gap-3 mb-3">
             <Database className="h-6 w-6 text-blue-400" />
             <h1 className="text-3xl md:text-4xl font-bold">Data Sync & Browser</h1>
@@ -114,9 +121,9 @@ export default function SyncPage() {
             Browse all contracts and sync new data from the Public Procurement Information Portal.
           </p>
         </div>
-      </div>
+      </section>
 
-      <div className="container mx-auto px-4 pb-12 space-y-6">
+      <div className="container mx-auto px-6 pb-12 space-y-6">
         {/* Sync Controls */}
         <div className="border border-slate-200 bg-white rounded-xl">
           <div className="p-5">
@@ -155,7 +162,7 @@ export default function SyncPage() {
                 <Button
                   onClick={handleSync}
                   disabled={syncing}
-                  className="w-full bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700"
+                  className="w-full bg-teal-600 hover:bg-teal-500"
                 >
                   {syncing ? (
                     <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Syncing...</>
@@ -243,7 +250,7 @@ export default function SyncPage() {
                 onChange={(e) => setFilters({...filters, search: e.target.value})}
                 onKeyDown={(e) => e.key === 'Enter' && applyFilters()}
               />
-              <Button onClick={applyFilters} className="bg-blue-600 hover:bg-blue-700">
+              <Button onClick={applyFilters} className="bg-teal-600 hover:bg-teal-500">
                 <Filter className="h-4 w-4 mr-2" /> Apply
               </Button>
             </div>

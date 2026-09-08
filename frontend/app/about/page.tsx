@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { Shield, Target, Users, Eye, Database, FileText } from "lucide-react"
+import { Shield, Target, Users, Eye, Database, FileText, ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 export const metadata: Metadata = {
@@ -12,32 +12,40 @@ export default function AboutPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Hero */}
-      <div className="bg-slate-900 text-white py-12 md:py-16">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center gap-3 mb-3">
-            <Shield className="h-6 w-6 text-teal-400" />
-            <h1 className="text-3xl md:text-4xl font-bold">About KenyaWatch</h1>
+      <section className="relative py-16 md:py-24 overflow-hidden">
+        <div className="absolute inset-0">
+          <img
+            src="https://images.unsplash.com/photo-1611348524140-53c9a25263d6?w=1920&q=80"
+            alt="Nairobi skyline"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-slate-950/85" />
+        </div>
+        <div className="relative z-10 container mx-auto px-6">
+          <div className="flex items-center gap-3 mb-4">
+            <Shield className="h-7 w-7 text-teal-400" />
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white">About KenyaWatch</h1>
           </div>
-          <p className="text-slate-400 max-w-2xl">
+          <p className="text-lg text-slate-300 max-w-2xl">
             Empowering Kenyans with data-driven tools to fight procurement corruption.
           </p>
         </div>
-      </div>
+      </section>
 
       {/* Mission Cards */}
       <section className="py-16 md:py-20">
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-6">
           <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto mb-20">
             {[
               { icon: Target, title: "Our Mission", text: "To make every Kenyan government procurement transaction transparent, traceable, and accountable through open data and AI-powered analysis." },
               { icon: Eye, title: "Our Vision", text: "A Kenya where public funds are spent with integrity, citizens can verify every contract, and corruption has nowhere to hide." },
               { icon: Users, title: "Who We Serve", text: "Citizens, journalists, civil society organizations, oversight bodies, and anyone who believes in transparent governance." },
             ].map((item, i) => (
-              <div key={i} className="border border-slate-200 bg-white rounded-xl p-6">
-                <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center mb-4">
-                  <item.icon className="h-5 w-5 text-slate-700" />
+              <div key={i} className="border border-slate-200 bg-white rounded-xl p-6 hover:shadow-lg hover:border-slate-300 transition-all duration-300">
+                <div className="w-11 h-11 bg-teal-50 rounded-lg flex items-center justify-center mb-5">
+                  <item.icon className="h-5 w-5 text-teal-600" />
                 </div>
-                <h2 className="text-lg font-semibold text-slate-900 mb-2">{item.title}</h2>
+                <h2 className="text-lg font-bold text-slate-900 mb-2">{item.title}</h2>
                 <p className="text-sm text-slate-600 leading-relaxed">{item.text}</p>
               </div>
             ))}
@@ -78,12 +86,12 @@ export default function AboutPage() {
                 { name: "EACC Referrals", desc: "Cases referred to the Ethics and Anti-Corruption Commission for investigation.", url: "https://eacc.go.ke" },
                 { name: "Citizen Reports", desc: "Anonymous submissions from Kenyan citizens through our secure reporting system." },
               ].map((source, i) => (
-                <div key={i} className="border border-slate-200 bg-white rounded-lg p-5">
-                  <h3 className="font-semibold text-slate-900 mb-1">{source.name}</h3>
-                  <p className="text-sm text-slate-600 mb-2">{source.desc}</p>
+                <div key={i} className="border border-slate-200 bg-white rounded-xl p-5 hover:border-slate-300 hover:shadow-sm transition-all">
+                  <h3 className="font-bold text-slate-900 mb-1">{source.name}</h3>
+                  <p className="text-sm text-slate-600 mb-3">{source.desc}</p>
                   {source.url && (
-                    <a href={source.url} target="_blank" rel="noopener noreferrer" className="text-sm text-teal-600 hover:text-teal-700 font-medium">
-                      Visit Source &rarr;
+                    <a href={source.url} target="_blank" rel="noopener noreferrer" className="text-sm text-teal-600 hover:text-teal-700 font-medium inline-flex items-center gap-1">
+                      Visit Source <ArrowRight className="h-3.5 w-3.5" />
                     </a>
                   )}
                 </div>

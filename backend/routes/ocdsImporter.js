@@ -294,20 +294,21 @@ router.post('/auto-import', async (_req, res) => {
     const countRes = await pool.query('SELECT COUNT(*) FROM contracts');
     const total = Number(countRes.rows[0].count);
 
-    if (total >= 10000) {
+    if (total >= 300000) {
       return res.json({ triggered: false, reason: `Already have ${total} contracts`, total });
     }
 
-    console.log(`[ocds-import] Auto-import triggered: ${total} contracts < 10000 threshold`);
+    console.log(`[ocds-import] Auto-import triggered: ${total} contracts < 300000 threshold`);
 
+    const currentYear = new Date().getFullYear();
     const targetYears = [];
-    for (let y = new Date().getFullYear(); y >= 2022; y--) {
+    for (let y = currentYear; y >= 2018; y--) {
       targetYears.push(y);
     }
 
     res.json({
       triggered: true,
-      reason: `Low contract count (${total}), importing recent years`,
+      reason: `Low contract count (${total}), importing years 2018-${currentYear}`,
       target_years: targetYears,
       total,
       message: 'Import jobs started. Use GET /api/ocds/import-status to monitor progress.',
