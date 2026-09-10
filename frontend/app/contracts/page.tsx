@@ -273,7 +273,7 @@ function ContractsPage() {
                         {c.supplier}
                       </td>
                       <td className="px-4 py-3 text-center">
-                        <Badge variant={risk.variant}>{c.risk_score}</Badge>
+                        <Badge variant={`risk_${risk.level}` as any}>{c.risk_score}</Badge>
                       </td>
                       <td className="px-4 py-3 text-center">
                         <Button onClick={() => handleViewContract(c)} variant="ghost" size="sm">
