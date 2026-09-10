@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useCallback, useRef } from "react"
+import { Suspense, useEffect, useState, useCallback, useRef } from "react"
 import { useSearchParams } from "next/navigation"
 import { Search, Filter, Eye, ExternalLink, X, Calendar, MapPin, Building2, AlertTriangle, FileText, DollarSign, Tag, Download } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -15,7 +15,9 @@ import { type Contract } from "@/types"
 export default function ContractsPageWrapper() {
   return (
     <div className="min-h-screen bg-slate-50">
-      <ContractsPage />
+      <Suspense fallback={<div className="flex items-center justify-center min-h-[50vh]"><div className="w-6 h-6 border-2 border-teal-600 border-t-transparent rounded-full animate-spin" /></div>}>
+        <ContractsPage />
+      </Suspense>
     </div>
   )
 }
