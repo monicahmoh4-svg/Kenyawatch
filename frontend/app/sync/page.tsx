@@ -131,15 +131,10 @@ export default function SyncPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Hero Header */}
-      <section className="relative py-12 md:py-16 mb-8 overflow-hidden">
-        <div className="absolute inset-0">
-          <img
-            src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1920&q=80"
-            alt="Data synchronization"
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-slate-950/90" />
-        </div>
+      <section className="relative py-12 md:py-16 mb-8 overflow-hidden bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+        <div className="absolute inset-0 opacity-20" style={{
+          backgroundImage: `radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.3) 0%, transparent 50%)`
+        }} />
         <div className="relative z-10 container mx-auto px-6">
           <div className="flex items-center gap-3 mb-3">
             <Database className="h-6 w-6 text-blue-400" />

@@ -122,6 +122,7 @@ async function ensureSchema() {
     'CREATE INDEX IF NOT EXISTS idx_contracts_sector ON contracts(sector);',
     'CREATE INDEX IF NOT EXISTS idx_contracts_value ON contracts(value_kes);',
     'CREATE INDEX IF NOT EXISTS idx_contracts_alert ON contracts(alert_status);',
+    'CREATE INDEX IF NOT EXISTS idx_contracts_search ON contracts USING gin (to_tsvector('english', coalesce(title,'') || ' ' || coalesce(supplier,'') || ' ' || coalesce(county,'') || ' ' || coalesce(scope,'')));',
     'CREATE INDEX IF NOT EXISTS idx_ghost_county ON ghost_projects(county);',
     'CREATE INDEX IF NOT EXISTS idx_reports_status ON reports(status);',
     'CREATE INDEX IF NOT EXISTS idx_alerts_type ON alerts(alert_type);',
@@ -347,56 +348,57 @@ async function seed() {
   let id = 1;
   const allContracts = [];
   const years = [];
-  for (let y = 2015; y <= 2026; y++) years.push(y);
+  for (let y = 2018; y <= 2026; y++) years.push(y);
 
   for (const county of counties) {
     const towns = townsByCounty[county.name] || [county.name, county.name + ' Town'];
-    const numContracts = 12 + (id % 8);
+    for (const year of years) {
+      for (const sector of sectors) {
+        const numPerSector = 2 + (id % 3);
+        for (let i = 0; i < numPerSector; i++) {
+          const town = towns[(id + i) % towns.length];
+          const templates = titleTemplates[sector] || titleTemplates['Infrastructure'];
+          const template = templates[(id + i) % templates.length];
+          const title = template.replace(/\{county\}/g, county.name).replace(/\{town\}/g, town);
 
-    for (let i = 0; i < numContracts; i++) {
-      const sector = sectors[id % sectors.length];
-      const town = towns[i % towns.length];
-      const templates = titleTemplates[sector] || titleTemplates['Infrastructure'];
-      const template = templates[i % templates.length];
-      const title = template.replace(/\{county\}/g, county.name).replace(/\{town\}/g, town);
+          const month = String(1 + (id % 12)).padStart(2, '0');
+          const day = String(1 + (id % 28)).padStart(2, '0');
 
-      const year = years[id % years.length];
-      const month = String(1 + (id % 12)).padStart(2, '0');
-      const day = String(1 + (id % 28)).padStart(2, '0');
+          let baseValue;
+          if (sector === 'Roads' || sector === 'Infrastructure') baseValue = 50000000 + ((id * 137) % 5000000000);
+          else if (sector === 'Health' || sector === 'Energy') baseValue = 20000000 + ((id * 251) % 2000000000);
+          else if (sector === 'ICT') baseValue = 10000000 + ((id * 79) % 500000000);
+          else if (sector === 'Agriculture') baseValue = 5000000 + ((id * 53) % 300000000);
+          else baseValue = 3000000 + ((id * 31) % 1000000000);
 
-      let baseValue;
-      if (sector === 'Roads' || sector === 'Infrastructure') baseValue = 50000000 + ((id * 137) % 5000000000);
-      else if (sector === 'Health' || sector === 'Energy') baseValue = 20000000 + ((id * 251) % 2000000000);
-      else if (sector === 'ICT') baseValue = 10000000 + ((id * 79) % 500000000);
-      else if (sector === 'Agriculture') baseValue = 5000000 + ((id * 53) % 300000000);
-      else baseValue = 3000000 + ((id * 31) % 1000000000);
+          const bidType = bidTypes[id % bidTypes.length];
+          const status = statuses[id % statuses.length];
 
-      const bidType = bidTypes[id % bidTypes.length];
-      const status = statuses[id % statuses.length];
+          const contract = {
+            contract_id: `PPIP-${year}-${String(id).padStart(6, '0')}`,
+            county: county.name,
+            sector,
+            year,
+            title,
+            supplier: suppliers[id % suppliers.length],
+            value_kes: baseValue,
+            bid_type: bidType,
+            scope: `${title}. This contract covers supply, delivery, installation, testing, and commissioning as per PPIP tender specifications and requirements under the Public Procurement and Asset Disposal Act 2015.`,
+            award_date: `${year}-${month}-${day}`,
+            status,
+            data_type: 'live_sync',
+            source_name: 'PPIP - Public Procurement Information Portal',
+            source_url: 'https://tenders.go.ke'
+          };
 
-      const contract = {
-        contract_id: `PPIP-${year}-${String(id).padStart(5, '0')}`,
-        county: county.name,
-        sector,
-        year,
-        title,
-        supplier: suppliers[id % suppliers.length],
-        value_kes: baseValue,
-        bid_type: bidType,
-        scope: `${title}. This contract covers supply, delivery, installation, testing, and commissioning as per PPIP tender specifications and requirements under the Public Procurement and Asset Disposal Act 2015.`,
-        award_date: `${year}-${month}-${day}`,
-        status,
-        data_type: 'live_sync',
-        source_name: 'PPIP - Public Procurement Information Portal',
-        source_url: 'https://tenders.go.ke'
-      };
+          const scored = scoreContract(contract);
+          contract.risk_score = scored.risk_score;
+          contract.risk_flags = scored.risk_flags;
 
-      const scored = scoreContract(contract);
-      contract.risk_score = scored.risk_score;
-      contract.risk_flags = scored.risk_flags;
-
-      allContracts.push(contract);
-      id++;
+          allContracts.push(contract);
+          id++;
+        }
+      }
     }
   }
 
@@ -408,19 +410,27 @@ async function seed() {
   }
 
   let inserted = 0;
-  for (const contract of allContracts) {
+  const batchSize = 500;
+  for (let i = 0; i < allContracts.length; i += batchSize) {
+    const batch = allContracts.slice(i, i + batchSize);
+    const values = [];
+    const params = [];
+    let paramIndex = 1;
+    for (const contract of batch) {
+      values.push(`($${paramIndex++},$${paramIndex++},$${paramIndex++},$${paramIndex++},$${paramIndex++},$${paramIndex++},$${paramIndex++},$${paramIndex++},$${paramIndex++},$${paramIndex++},$${paramIndex++},$${paramIndex++},$${paramIndex++},$${paramIndex++},$${paramIndex++},$${paramIndex++})`);
+      params.push(contract.contract_id, contract.county, contract.sector, contract.year, contract.title, contract.supplier, contract.value_kes, contract.bid_type, contract.scope, contract.award_date, contract.status || 'active', contract.risk_score, JSON.stringify(contract.risk_flags), contract.data_type, contract.source_name || null, contract.source_url || null);
+    }
     try {
-      await pool.query(`
-        INSERT INTO contracts (contract_id,county,sector,year,title,supplier,value_kes,bid_type,scope,award_date,status,risk_score,risk_flags,data_type,source_name,source_url)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
-        ON CONFLICT (contract_id) DO NOTHING`,
-        [contract.contract_id, contract.county, contract.sector, contract.year, contract.title, contract.supplier, contract.value_kes, contract.bid_type, contract.scope, contract.award_date, contract.status || 'active', contract.risk_score, JSON.stringify(contract.risk_flags), contract.data_type, contract.source_name || null, contract.source_url || null]);
-      inserted++;
+      await pool.query(
+        `INSERT INTO contracts (contract_id,county,sector,year,title,supplier,value_kes,bid_type,scope,award_date,status,risk_score,risk_flags,data_type,source_name,source_url) VALUES ${values.join(',')} ON CONFLICT (contract_id) DO NOTHING`,
+        params
+      );
+      inserted += batch.length;
     } catch (e) {
-      console.warn('[seed]', e.message.substring(0, 100));
+      console.warn('[seed] batch insert error:', e.message.substring(0, 200));
     }
   }
-  console.log(`[seed] Inserted ${inserted} contracts`);
+  console.log(`[seed] Inserted ${inserted} contracts (${allContracts.length} generated)`);
 
   const ghostProjects = [
     { project_id: 'GP-ARRR-001', county: 'Baringo', title: 'Arror Dam Project', description: 'Multi-billion shilling dam project flagged in Auditor-General reports. Payments made but construction stalled. Site visits reveal minimal progress despite claimed 80% completion.', claimed_status: 'disputed', lat: 0.75, lng: 35.95, data_type: 'documented', source_name: 'Auditor-General of Kenya', source_url: 'https://www.ago.go.ke/reports' },

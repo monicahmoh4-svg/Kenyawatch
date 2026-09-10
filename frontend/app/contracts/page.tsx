@@ -1,6 +1,6 @@
 "use client"
 
-import { Suspense, useEffect, useState, useCallback, useRef } from "react"
+import { useEffect, useState, useCallback, useRef } from "react"
 import { useSearchParams } from "next/navigation"
 import { Search, Filter, Eye, ExternalLink, X, Calendar, MapPin, Building2, AlertTriangle, FileText, DollarSign, Tag, Download } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -14,9 +14,9 @@ import { type Contract } from "@/types"
 
 export default function ContractsPageWrapper() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-slate-50 flex items-center justify-center"><div className="w-6 h-6 border-2 border-teal-600 border-t-transparent rounded-full animate-spin" /></div>}>
+    <div className="min-h-screen bg-slate-50">
       <ContractsPage />
-    </Suspense>
+    </div>
   )
 }
 
@@ -66,16 +66,16 @@ function ContractsPage() {
   const applyFilters = () => { setPage(1) }
 
   const exportCSV = () => {
-    const headers = ["Contract ID", "Title", "County", "Sector", "Year", "Supplier", "Value (KES)", "Risk Score", "Data Type", "Source"]
+    const headers = ["Contract ID", "Title", "County", "Sector", "Year", "Supplier", "Value (KES)", "Risk Score", "Data Type"]
     const rows = contracts.map(c => [
-      c.contract_id, `"${(c.title || '').replace(/"/g, '""')}"`,
-      c.county || '', c.sector || '', c.year || '', `"${(c.supplier || '').replace(/"/g, '""')}"`,
-      c.value_kes || 0, c.risk_score || 0, c.data_type || '', c.source_name || ''
+      c.contract_id, `"${(c.title || "").replace(/"/g, '""')}"`,
+      c.county || "", c.sector || "", c.year || "", `"${(c.supplier || "").replace(/"/g, '""')}"`,
+      c.value_kes || 0, c.risk_score || 0, c.data_type || ""
     ])
-    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n')
-    const blob = new Blob([csv], { type: 'text/csv' })
+    const csv = [headers.join(","), ...rows.map(r => r.join(","))].join("\n")
+    const blob = new Blob([csv], { type: "text/csv" })
     const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
+    const a = document.createElement("a")
     a.href = url
     a.download = `kenyawatch-contracts-${new Date().toISOString().slice(0, 10)}.csv`
     a.click()
@@ -91,13 +91,12 @@ function ContractsPage() {
     } catch {} finally { setDetailLoading(false) }
   }
 
-  // Focus trap and escape key for modal
   useEffect(() => {
     if (!selectedContract) return
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") setSelectedContract(null)
       if (e.key === "Tab" && modalRef.current) {
-        const focusable = modalRef.current.querySelectorAll<HTMLElement>('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')
+        const focusable = modalRef.current.querySelectorAll<HTMLElement>("button, [href], input, select, textarea, [tabindex]:not([tabindex=\"-1\"])")
         if (focusable.length === 0) return
         const first = focusable[0]
         const last = focusable[focusable.length - 1]
@@ -114,17 +113,12 @@ function ContractsPage() {
   const avgRisk = contracts.length ? Math.round(contracts.reduce((sum: number, c: any) => sum + (c.risk_score || 0), 0) / contracts.length) : 0
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div>
       {/* Hero Header */}
-      <section className="relative py-12 md:py-16 mb-8 overflow-hidden">
-        <div className="absolute inset-0">
-          <img
-            src="https://images.unsplash.com/photo-1450101499163-c8848e968838?w=1920&q=80"
-            alt="Government contracts"
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-slate-950/90" />
-        </div>
+      <section className="relative py-12 md:py-16 mb-8 overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-teal-900">
+        <div className="absolute inset-0 opacity-20" style={{
+          backgroundImage: `radial-gradient(circle at 50% 50%, rgba(20, 184, 166, 0.3) 0%, transparent 50%)`
+        }} />
         <div className="relative z-10 container mx-auto px-6">
           <div className="flex items-center gap-3 mb-3">
             <FileText className="h-6 w-6 text-teal-400" />
@@ -202,7 +196,7 @@ function ContractsPage() {
                 </SelectContent>
               </Select>
               <div className="flex gap-2">
-                <Input placeholder="Search..." value={filters.search} onChange={(e) => setFilters({...filters, search: e.target.value})} onKeyDown={(e) => e.key === 'Enter' && applyFilters()} className="flex-1" />
+                <Input placeholder="Search..." value={filters.search} onChange={(e) => setFilters({...filters, search: e.target.value})} onKeyDown={(e) => e.key === "Enter" && applyFilters()} className="flex-1" />
                 <Button onClick={applyFilters} size="icon" variant="outline" className="flex-shrink-0" aria-label="Search contracts">
                   <Search className="h-4 w-4" />
                 </Button>
@@ -214,7 +208,7 @@ function ContractsPage() {
         {/* Results */}
         <div className="mb-4 flex items-center justify-between">
           <p className="text-sm text-slate-500">
-            Showing <span className="font-medium text-slate-700">{contracts.length}</span> of <span className="font-medium text-slate-700">{total}</span> contracts
+            Showing <span className="font-medium text-slate-700">{contracts.length}</span> of <span className="font-medium text-slate-700">{total.toLocaleString()}</span> contracts
           </p>
           <Button onClick={exportCSV} variant="outline" size="sm" disabled={contracts.length === 0}>
             <Download className="h-4 w-4 mr-2" /> Export CSV
@@ -254,34 +248,36 @@ function ContractsPage() {
                   </td></tr>
                 ) : contracts.map((c: any) => {
                   const risk = getRiskLevel(c.risk_score)
-                  const dt = dataTypeConfig[c.data_type as keyof typeof dataTypeConfig]
                   return (
                     <tr key={c.id} className="hover:bg-slate-50 transition-colors">
                       <td className="px-4 py-3 whitespace-nowrap">
                         <span className="font-mono text-xs text-slate-600">{c.contract_id}</span>
-                        <Badge variant={c.data_type as any} className="mt-1 text-[10px] px-1.5 py-0">{dt?.label || c.data_type}</Badge>
                       </td>
                       <td className="px-4 py-3 max-w-xs">
-                        <div className="font-medium text-slate-900 line-clamp-2">{c.title}</div>
-                        <div className="text-xs text-slate-400 mt-0.5">Year: {c.year}</div>
-                        {c.source_url && (
-                          <a href={c.source_url} target="_blank" rel="noopener noreferrer" className="text-xs text-teal-600 hover:underline flex items-center gap-1 mt-1">
-                            <ExternalLink className="h-3 w-3" /> Source
-                          </a>
-                        )}
+                        <div className="font-medium text-slate-900 truncate">{c.title}</div>
+                        <div className="text-xs text-slate-400 mt-0.5 truncate">{c.source_name}</div>
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-slate-600">
-                        <MapPin className="h-3 w-3 text-slate-400 inline mr-1" />{c.county}
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-1">
+                          <MapPin className="h-3 w-3 text-slate-400" />
+                          <span>{c.county}</span>
+                        </div>
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-slate-600">{c.sector}</td>
-                      <td className="px-4 py-3 text-right whitespace-nowrap font-medium text-slate-900">{formatCurrency(c.value_kes)}</td>
-                      <td className="px-4 py-3 max-w-[180px]"><div className="truncate text-slate-600" title={c.supplier}>{c.supplier}</div></td>
-                      <td className="px-4 py-3 text-center whitespace-nowrap">
-                        <Badge variant={risk.level as any} className="font-mono text-xs">{c.risk_score}</Badge>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <Badge variant="outline" className="text-xs">{c.sector}</Badge>
                       </td>
-                      <td className="px-4 py-3 text-center whitespace-nowrap">
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleViewContract(c)} aria-label={`View contract ${c.contract_id}`}>
-                          <Eye className="h-3.5 w-3.5" />
+                      <td className="px-4 py-3 text-right font-medium text-teal-600">
+                        {formatCurrency(c.value_kes)}
+                      </td>
+                      <td className="px-4 py-3 max-w-[200px] truncate text-slate-600">
+                        {c.supplier}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <Badge variant={risk.variant}>{c.risk_score}</Badge>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <Button onClick={() => handleViewContract(c)} variant="ghost" size="sm">
+                          <Eye className="h-4 w-4" />
                         </Button>
                       </td>
                     </tr>
@@ -293,86 +289,70 @@ function ContractsPage() {
         </div>
 
         {/* Pagination */}
-        {total > 20 && !loading && (
+        {total > 20 && (
           <div className="flex justify-center items-center gap-2 mt-6">
-            <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>Previous</Button>
-            <span className="px-4 py-2 text-sm text-slate-600">Page {page} of {Math.ceil(total / 20)}</span>
-            <Button variant="outline" size="sm" onClick={() => setPage(p => p + 1)} disabled={page >= Math.ceil(total / 20)}>Next</Button>
+            <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
+              Previous
+            </Button>
+            <span className="px-4 py-2 text-sm text-slate-600">
+              Page {page} of {Math.ceil(total / 20)}
+            </span>
+            <Button variant="outline" size="sm" onClick={() => setPage(p => p + 1)} disabled={page >= Math.ceil(total / 20)}>
+              Next
+            </Button>
           </div>
         )}
       </div>
 
-      {/* Modal */}
+      {/* Contract Detail Modal */}
       {selectedContract && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/50 modal-overlay" onClick={() => setSelectedContract(null)} />
-          <div ref={modalRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="Contract details" className="relative bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto modal-content outline-none">
-            <div className="sticky top-0 bg-slate-900 text-white p-5 rounded-t-xl z-10">
-              <div className="flex items-start justify-between">
-                <div>
-                  <div className="text-xs text-slate-400 mb-1 font-mono">{selectedContract.contract_id}</div>
-                  <h2 className="text-lg font-bold leading-snug pr-8">{selectedContract.title}</h2>
-                </div>
-                <Button variant="ghost" size="icon" onClick={() => setSelectedContract(null)} className="text-slate-400 hover:text-white hover:bg-slate-800 absolute top-4 right-4 h-8 w-8">
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-              <div className="flex items-center gap-2 mt-3">
-                <Badge variant={selectedContract.data_type as any} className="text-xs">{dataTypeConfig[selectedContract.data_type as keyof typeof dataTypeConfig]?.label}</Badge>
-                <Badge variant={getRiskLevel(selectedContract.risk_score).level as any} className="text-xs">Risk: {selectedContract.risk_score}</Badge>
-              </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setSelectedContract(null)}>
+          <div
+            ref={modalRef}
+            tabIndex={-1}
+            className="bg-white rounded-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between">
+              <h2 className="font-semibold text-slate-900">Contract Details</h2>
+              <Button onClick={() => setSelectedContract(null)} variant="ghost" size="icon" className="h-8 w-8">
+                <X className="h-4 w-4" />
+              </Button>
             </div>
-            <div className="p-5 space-y-4">
+            <div className="p-6 space-y-4">
               {detailLoading ? (
-                <div className="flex justify-center py-8">
+                <div className="flex items-center justify-center py-8">
                   <div className="w-6 h-6 border-2 border-teal-600 border-t-transparent rounded-full animate-spin" />
                 </div>
               ) : (
                 <>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    {[
-                      { icon: MapPin, label: "County", value: selectedContract.county },
-                      { icon: Building2, label: "Sector", value: selectedContract.sector },
-                      { icon: DollarSign, label: "Value", value: formatCurrency(selectedContract.value_kes), className: "text-teal-600" },
-                      { icon: Calendar, label: "Award Date", value: selectedContract.award_date || 'N/A' },
-                      { icon: Tag, label: "Bid Type", value: selectedContract.bid_type || 'N/A' },
-                      { icon: Calendar, label: "Year", value: selectedContract.year },
-                    ].map((item, i) => (
-                      <div key={i} className="bg-slate-50 rounded-lg p-3">
-                        <div className="flex items-center gap-1.5 text-xs text-slate-500 mb-1">
-                          <item.icon className="h-3 w-3" /> {item.label}
-                        </div>
-                        <div className={`text-sm font-semibold ${item.className || 'text-slate-900'}`}>{item.value}</div>
-                      </div>
-                    ))}
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-900 mb-1">{selectedContract.title}</h3>
+                    <p className="text-sm text-slate-500 font-mono">{selectedContract.contract_id}</p>
                   </div>
-
-                  <div className="bg-slate-50 rounded-lg p-4">
-                    <div className="text-xs text-slate-500 mb-1">Supplier</div>
-                    <div className="text-sm font-medium text-slate-900">{selectedContract.supplier || 'N/A'}</div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex items-center gap-2 text-sm"><MapPin className="h-4 w-4 text-slate-400" /><span className="text-slate-600">{selectedContract.county}</span></div>
+                    <div className="flex items-center gap-2 text-sm"><Building2 className="h-4 w-4 text-slate-400" /><span className="text-slate-600">{selectedContract.sector}</span></div>
+                    <div className="flex items-center gap-2 text-sm"><DollarSign className="h-4 w-4 text-slate-400" /><span className="text-slate-600">{formatCurrency(selectedContract.value_kes)}</span></div>
+                    <div className="flex items-center gap-2 text-sm"><Calendar className="h-4 w-4 text-slate-400" /><span className="text-slate-600">{selectedContract.award_date}</span></div>
+                    <div className="flex items-center gap-2 text-sm"><Tag className="h-4 w-4 text-slate-400" /><span className="text-slate-600">{selectedContract.bid_type}</span></div>
+                    <div className="flex items-center gap-2 text-sm"><AlertTriangle className="h-4 w-4 text-slate-400" /><span className="text-slate-600">Risk: {selectedContract.risk_score}/100</span></div>
                   </div>
-
-                  <div className="bg-slate-50 rounded-lg p-4">
-                    <div className="text-xs text-slate-500 mb-1">Scope / Description</div>
-                    <div className="text-sm text-slate-700 leading-relaxed">{selectedContract.scope || 'No description available'}</div>
-                  </div>
-
-                  {selectedContract.risk_flags && Object.keys(selectedContract.risk_flags).length > 0 && (
-                    <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                      <div className="flex items-center gap-2 text-xs font-semibold text-red-800 mb-2">
-                        <AlertTriangle className="h-3.5 w-3.5" /> Risk Flags Detected
-                      </div>
-                      <div className="flex flex-wrap gap-1.5">
-                        {Object.entries(selectedContract.risk_flags).map(([key, value]) => (
-                          value && <Badge key={key} variant="destructive" className="text-[10px]">{key.replace(/_/g, ' ')}</Badge>
-                        ))}
-                      </div>
+                  {selectedContract.supplier && (
+                    <div>
+                      <h4 className="text-sm font-semibold text-slate-700 mb-1">Supplier</h4>
+                      <p className="text-sm text-slate-600">{selectedContract.supplier}</p>
                     </div>
                   )}
-
+                  {selectedContract.scope && (
+                    <div>
+                      <h4 className="text-sm font-semibold text-slate-700 mb-1">Scope</h4>
+                      <p className="text-sm text-slate-600">{selectedContract.scope}</p>
+                    </div>
+                  )}
                   {selectedContract.source_url && (
                     <a href={selectedContract.source_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm text-teal-600 hover:text-teal-700 font-medium">
-                      <ExternalLink className="h-3.5 w-3.5" /> View Original Source ({selectedContract.source_name || 'External'})
+                      <ExternalLink className="h-3.5 w-3.5" /> View Original Source ({selectedContract.source_name || "External"})
                     </a>
                   )}
                 </>

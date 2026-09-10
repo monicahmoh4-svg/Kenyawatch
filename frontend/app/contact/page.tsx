@@ -10,15 +10,10 @@ export default function ContactPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Hero */}
-      <section className="relative py-16 md:py-24 overflow-hidden">
-        <div className="absolute inset-0">
-          <img
-            src="https://images.unsplash.com/photo-1497436072909-60f360e1d4b1?w=1920&q=80"
-            alt="Kenya landscape"
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-slate-950/85" />
-        </div>
+      <section className="relative py-16 md:py-24 overflow-hidden bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+        <div className="absolute inset-0 opacity-20" style={{
+          backgroundImage: `radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.3) 0%, transparent 50%)`
+        }} />
         <div className="relative z-10 container mx-auto px-6">
           <div className="flex items-center gap-3 mb-4">
             <Mail className="h-7 w-7 text-teal-400" />

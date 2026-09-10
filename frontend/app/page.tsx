@@ -3,10 +3,9 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Shield, FileText, MapPin, MessageSquare, ArrowRight, AlertTriangle, Eye, Users, ChevronDown, TrendingUp, Globe, Search } from "lucide-react"
+import { Shield, FileText, MapPin, MessageSquare, ArrowRight, AlertTriangle, Eye, Users, ChevronDown, TrendingUp, Globe, Search, Bell, Activity } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
 import { statsApi } from "@/lib/api"
 import { type DashboardStats } from "@/types"
 
@@ -35,7 +34,7 @@ export default function HomePage() {
       href: "/contracts",
       stat: stats?.total || 0,
       statLabel: "contracts tracked",
-      image: "https://images.unsplash.com/photo-1450101499163-c8848e968838?w=600&q=75",
+      gradient: "from-blue-600 to-indigo-700",
     },
     {
       icon: MapPin,
@@ -44,55 +43,61 @@ export default function HomePage() {
       href: "/ghost-projects",
       stat: "10+",
       statLabel: "ghost projects",
-      image: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600&q=75",
+      gradient: "from-red-500 to-orange-600",
     },
     {
-      icon: Shield,
-      title: "Anonymous Reporting",
-      description: "Report suspected procurement corruption with complete anonymity. No personal data is collected or stored.",
-      href: "/report",
-      stat: stats?.reports_total || 0,
-      statLabel: "reports filed",
-      image: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=600&q=75",
+      icon: Bell,
+      title: "AI Alert System",
+      description: "Real-time monitoring detects anomalies, suspicious procurement patterns, and corruption indicators automatically.",
+      href: "/alerts",
+      stat: "24/7",
+      statLabel: "monitoring",
+      gradient: "from-amber-500 to-red-600",
     },
     {
       icon: MessageSquare,
       title: "AI Investigator",
       description: "Ask natural language questions about procurement data. Our AI analyzes patterns and surfaces corruption indicators.",
       href: "/chat",
-      stat: "24/7",
-      statLabel: "available",
-      image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=600&q=75",
+      stat: "Live",
+      statLabel: "AI analysis",
+      gradient: "from-purple-500 to-pink-600",
     },
   ]
 
   const statsDisplay = [
-    { label: "Total Contracts", value: stats?.total || 0, icon: FileText },
-    { label: "Documented Cases", value: stats?.documented || 0, icon: Eye },
-    { label: "High Risk Items", value: stats?.critical || 0, icon: AlertTriangle },
-    { label: "Citizen Reports", value: stats?.reports_total || 0, icon: Users },
+    { label: "Total Contracts", value: stats?.total || 0, icon: FileText, color: "text-white" },
+    { label: "Documented Cases", value: stats?.documented || 0, icon: Eye, color: "text-teal-300" },
+    { label: "High Risk Items", value: stats?.critical || 0, icon: AlertTriangle, color: "text-amber-300" },
+    { label: "Citizen Reports", value: stats?.reports_total || 0, icon: Users, color: "text-blue-300" },
   ]
 
   return (
     <div>
-      {/* Hero Section - Cinematic KICC/Nairobi */}
+      {/* Hero Section */}
       <section className="relative min-h-[90vh] md:min-h-screen flex items-center overflow-hidden">
-        {/* Background image */}
-        <div className="absolute inset-0">
-          <img
-            src="https://images.unsplash.com/photo-1590845077913-1e9e640704e5?w=1920&q=80"
-            alt="Nairobi cityscape"
-            className="w-full h-full object-cover"
-          />
-          {/* Cinematic overlay - gradient from dark left to transparent right */}
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-900/80 to-slate-900/40" />
-          {/* Subtle grain texture */}
-          <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E\")" }} />
+        {/* Animated gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-teal-900 to-slate-900">
+          <div className="absolute inset-0 opacity-30" style={{
+            backgroundImage: `radial-gradient(circle at 20% 50%, rgba(20, 184, 166, 0.3) 0%, transparent 50%),
+                              radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.2) 0%, transparent 50%),
+                              radial-gradient(circle at 60% 80%, rgba(168, 85, 247, 0.2) 0%, transparent 50%)`
+          }} />
+          {/* Grid pattern */}
+          <div className="absolute inset-0 opacity-5" style={{
+            backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
+            backgroundSize: "60px 60px"
+          }} />
+          {/* Floating orbs */}
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
+          <div className="absolute top-1/2 right-1/3 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "2s" }} />
         </div>
 
         <div className="relative z-10 container mx-auto px-6 py-24 md:py-0">
           <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 mb-8 px-4 py-2 rounded-full border border-teal-400/20 bg-teal-500/10 backdrop-blur-sm">
+            <div className="inline-flex items-center gap-2 mb-8 px-4 py-2 rounded-full border border-teal-400/30 bg-teal-500/10 backdrop-blur-sm">
               <span className="w-2 h-2 rounded-full bg-teal-400 animate-pulse" />
               <span className="text-teal-300 text-xs font-medium tracking-wider uppercase">Live Data Platform</span>
             </div>
@@ -102,7 +107,7 @@ export default function HomePage() {
               <br />
               Public Procurement
               <br />
-              <span className="bg-gradient-to-r from-teal-300 via-teal-400 to-emerald-400 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-teal-300 via-emerald-400 to-cyan-300 bg-clip-text text-transparent">
                 Transparent
               </span>
             </h1>
@@ -111,6 +116,7 @@ export default function HomePage() {
               Track government contracts across all 47 counties. AI-powered risk detection. Open data. Built for accountability.
             </p>
 
+            {/* Search Bar */}
             <form onSubmit={handleSearch} className="flex flex-col sm:flex-row items-stretch gap-3 mb-8 max-w-xl">
               <div className="relative flex-1">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
@@ -119,10 +125,10 @@ export default function HomePage() {
                   placeholder="Search contracts, counties, suppliers..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-11 pr-4 py-3.5 bg-white/10 border border-white/20 rounded-xl text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500/50 backdrop-blur-sm text-sm"
+                  className="w-full pl-11 pr-4 py-4 bg-white/10 border border-white/20 rounded-xl text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500/50 backdrop-blur-sm text-sm"
                 />
               </div>
-              <Button type="submit" size="lg" className="bg-teal-600 hover:bg-teal-500 text-white px-6 py-3.5 rounded-xl font-medium shadow-lg shadow-teal-900/40 transition-all hover:shadow-teal-800/50">
+              <Button type="submit" size="lg" className="bg-teal-600 hover:bg-teal-500 text-white px-8 py-4 rounded-xl font-medium shadow-lg shadow-teal-900/40 transition-all hover:shadow-teal-800/50">
                 <Search className="h-4 w-4 mr-2" />
                 Search
               </Button>
@@ -146,7 +152,7 @@ export default function HomePage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 mt-16 pt-8 border-t border-white/10">
               {statsDisplay.map((stat, i) => (
                 <div key={i}>
-                  <div className="text-3xl md:text-4xl font-bold text-white mb-1">
+                  <div className={`text-3xl md:text-4xl font-bold ${stat.color} mb-1`}>
                     {loading ? <span className="inline-block w-16 h-7 skeleton" /> : stat.value.toLocaleString()}
                   </div>
                   <div className="text-sm text-slate-400 font-medium">{stat.label}</div>
@@ -163,7 +169,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Features Section - HD Image Cards */}
+      {/* Features Section */}
       <section className="py-24 md:py-32 bg-white">
         <div className="container mx-auto px-6">
           <div className="max-w-2xl mb-16">
@@ -180,17 +186,17 @@ export default function HomePage() {
             {features.map((feature, i) => (
               <Link key={i} href={feature.href} className="group">
                 <Card className="h-full border border-slate-200 overflow-hidden hover:shadow-xl hover:border-slate-300 transition-all duration-300">
-                  <div className="relative h-48 overflow-hidden">
-                    <img
-                      src={feature.image}
-                      alt={feature.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                  <div className={`relative h-48 bg-gradient-to-br ${feature.gradient} overflow-hidden`}>
+                    <div className="absolute inset-0 opacity-20" style={{
+                      backgroundImage: `radial-gradient(circle at 30% 50%, rgba(255,255,255,0.3) 0%, transparent 50%)`
+                    }} />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <feature.icon className="h-16 w-16 text-white/30" />
+                    </div>
                     <div className="absolute bottom-4 left-5 right-5">
                       <div className="flex items-baseline gap-1.5">
                         <span className="text-3xl font-bold text-white">
-                          {typeof feature.stat === 'number' ? feature.stat.toLocaleString() : feature.stat}
+                          {typeof feature.stat === "number" ? feature.stat.toLocaleString() : feature.stat}
                         </span>
                         <span className="text-sm text-white/80">{feature.statLabel}</span>
                       </div>
@@ -219,7 +225,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* How It Works - Editorial Layout */}
+      {/* How It Works */}
       <section className="py-24 md:py-32 bg-slate-50">
         <div className="container mx-auto px-6">
           <div className="max-w-2xl mb-16">
@@ -248,16 +254,11 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Data Integrity - Dark Cinematic Section */}
-      <section className="relative py-24 md:py-32 overflow-hidden">
-        <div className="absolute inset-0">
-          <img
-            src="https://images.unsplash.com/photo-1590845077913-1e9e640704e5?w=1920&q=80"
-            alt="Nairobi city"
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-slate-950/90" />
-        </div>
+      {/* Data Integrity - Dark Section */}
+      <section className="relative py-24 md:py-32 overflow-hidden bg-slate-900">
+        <div className="absolute inset-0 opacity-20" style={{
+          backgroundImage: `radial-gradient(circle at 50% 50%, rgba(20, 184, 166, 0.3) 0%, transparent 50%)`
+        }} />
         <div className="relative z-10 container mx-auto px-6">
           <div className="max-w-4xl mx-auto text-center">
             <div className="inline-flex items-center justify-center w-14 h-14 bg-amber-500/10 rounded-xl mb-6">
@@ -288,6 +289,38 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* AI Monitor Section */}
+      <section className="relative py-24 md:py-32 overflow-hidden bg-gradient-to-br from-teal-900 via-slate-900 to-purple-900">
+        <div className="absolute inset-0 opacity-30" style={{
+          backgroundImage: `radial-gradient(circle at 20% 80%, rgba(168, 85, 247, 0.3) 0%, transparent 50%),
+                            radial-gradient(circle at 80% 20%, rgba(20, 184, 166, 0.3) 0%, transparent 50%)`
+        }} />
+        <div className="relative z-10 container mx-auto px-6">
+          <div className="max-w-4xl mx-auto text-center">
+            <div className="inline-flex items-center justify-center w-14 h-14 bg-teal-500/10 rounded-xl mb-6">
+              <Activity className="h-7 w-7 text-teal-400" />
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">AI-Powered Monitoring</h2>
+            <p className="text-lg text-slate-300 mb-12 max-w-2xl mx-auto">
+              Our AI agent continuously scans procurement data, detects anomalies, and raises alerts for suspicious patterns in real-time.
+            </p>
+            <div className="grid md:grid-cols-3 gap-6">
+              {[
+                { icon: Activity, title: "Continuous Scanning", desc: "Every 5 minutes, our AI scans all contracts for red flags and suspicious patterns" },
+                { icon: Bell, title: "Instant Alerts", desc: "Critical findings trigger immediate alerts with sound notifications" },
+                { icon: Shield, title: "EACC Forwarding", desc: "High-risk cases are automatically forwarded to the Ethics and Anti-Corruption Commission" },
+              ].map((item, i) => (
+                <div key={i} className="bg-white/5 border border-white/10 rounded-xl p-6 backdrop-blur-sm">
+                  <item.icon className="h-8 w-8 text-teal-400 mb-4" />
+                  <h3 className="text-lg font-semibold text-white mb-2">{item.title}</h3>
+                  <p className="text-sm text-slate-300">{item.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* FAQ */}
       <section className="py-24 md:py-32 bg-white">
         <div className="container mx-auto px-6">
@@ -303,8 +336,8 @@ export default function HomePage() {
               { q: "Where does the data come from?", a: "Our data comes from the Public Procurement Information Portal (PPIP) at tenders.go.ke, the Open Contracting Data Standard (OCDS) registry, Auditor-General reports, and anonymous citizen submissions. Each record is tagged with its source." },
               { q: "Is the data accurate?", a: "We display data exactly as published by official sources. We do not modify or fabricate data. Synthetic data used for demonstration is always clearly labeled as 'Reference'. We encourage users to verify information independently." },
               { q: "Can I report corruption anonymously?", a: "Yes. Our reporting system collects no personal information whatsoever — no IP addresses, no browser fingerprints, no email or phone numbers. For maximum anonymity, use Tor Browser or a VPN." },
-              { q: "How does the AI risk scoring work?", a: "Our risk engine analyzes contracts for red flags including single-source procurement, overpricing, vague scope descriptions, unusually high values, and patterns consistent with bid rigging. Each contract receives a risk score from 0-100." },
-              { q: "Is KenyaWatch affiliated with the government?", a: "No. KenyaWatch is built independently by citizens who believe in transparent governance. We are not affiliated with, endorsed by, or connected to any government agency, political party, or commercial entity." },
+              { q: "How does the AI risk scoring work?", a: "Our risk engine analyzes contracts for red flags including single-source procurement, overpricing, vague scope descriptions, unusually high values, weekend/off-hours awards, and patterns consistent with bid rigging. Each contract receives a risk score from 0-100." },
+              { q: "How does the AI monitoring work?", a: "Our AI Monitor Agent runs every 5 minutes, scanning all contracts for anomalies. It detects dominant suppliers, high single-source ratios, stale contracts, and completion issues. Critical cases are automatically forwarded to the EACC." },
             ].map((faq, i) => (
               <details key={i} className="group border border-slate-200 rounded-xl overflow-hidden">
                 <summary className="flex items-center justify-between px-6 py-5 cursor-pointer font-medium text-slate-900 hover:bg-slate-50 transition-colors [&::-webkit-details-marker]:hidden list-none">
@@ -328,16 +361,12 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* CTA Section - Dark with background */}
-      <section className="relative py-24 md:py-32 overflow-hidden">
-        <div className="absolute inset-0">
-          <img
-            src="https://images.unsplash.com/photo-1497436072909-60f360e1d4b1?w=1920&q=80"
-            alt="Kenya landscape"
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-slate-950/85" />
-        </div>
+      {/* CTA Section */}
+      <section className="relative py-24 md:py-32 overflow-hidden bg-slate-900">
+        <div className="absolute inset-0 opacity-30" style={{
+          backgroundImage: `radial-gradient(circle at 30% 50%, rgba(20, 184, 166, 0.3) 0%, transparent 50%),
+                            radial-gradient(circle at 70% 50%, rgba(59, 130, 246, 0.2) 0%, transparent 50%)`
+        }} />
         <div className="relative z-10 container mx-auto px-6 text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
             Ready to hold government accountable?
